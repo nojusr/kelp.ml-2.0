@@ -2,7 +2,7 @@
 // src/Controller/ApiController.php
 namespace App\Controller;
 
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,14 +15,42 @@ use App\Entity\Paste;
 class ApiController extends AbstractController
 {
 
-    public function human_filesize($bytes, $dec = 2) //
+    public function human_filesize($bytes, $dec = 2) // used for generating a human readable size from bytes
     {
         $size   = array('b', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb');
         $factor = floor((strlen($bytes) - 1) / 3);
 
         return sprintf("%.{$dec}f", $bytes / pow(1024, $factor)) . @$size[$factor];
     }
-
+    
+    function get_file_type($file) { // gets file MIME type by checking it's magic value.
+        if(function_exists('shell_exec') === TRUE) {
+            $dump = shell_exec(sprintf('file -bi %s', escapeshellarg($file)));
+            $info = explode(';', $dump);
+            return $info[0];
+        }
+            return FALSE;
+    }
+    
+    function get_media_extension($mimeType) { // used for changing the mimetype of media files, in order to not fool the end user
+        $mimeMap = [ ' image/png' => 'png',
+                     ' image/jpg' => 'jpg',
+                     ' image/jpeg' => 'jpeg',    
+                     ' image/tiff' => 'tiff',
+                     ' image/gif' => 'gif',
+                     ' audio/opus'=> 'opus',
+                     ' audio/webm' => 'webm',
+                     ' audio/flac' => 'flac',
+                     ' audio/mpeg' => 'mp3',
+                     ' video/webm' => 'webm',
+                     ' video/mp4' => 'mp4'
+                   ];
+                   
+        return isset($mimeMap[$mimeType]) === true ? $mimeMap[$mimeType] : false;
+    }
+    
+    
+    
     /**
      * @Route("/api/upload", name="file_upload")
      */
@@ -55,13 +83,33 @@ class ApiController extends AbstractController
         $fileName = explode('.', $uFile->getClientOriginalName());
         $realName = $fileName[0];
         $fileType = implode('.', array_slice($fileName, 1));
-
+        
+        // getting both the magic value mimetype and the mimetype provided by the client
+        $fileMime = ' '.$this->get_file_type($uFile);
+        $clientMime = ' '.$uFile->getMimeType();
+        
+        // more error checking
+        
+        if ($fileMime !== $clientMime) {
+            return $this->json(['success' => 'false', 'reason' => 'Magic value MIME type does not match the MIME type provided by the client']);
+        }
+        
+        if ($fileMime === 'text/plain' && $fileType !== 'txt') {
+            return $this->json(['success' => 'false', 'reason' => 'Unsupported or unallowed filetype']);
+        }
+        
+        $mediaType = $this->get_media_extension($fileMime);
+        
+        if ($mediaType !== false){
+            $fileType = $mediaType;
+        }
+                
         $allowedFiles = $this->getParameter('allowed_filetypes');
         $allowedFiles = explode(',', $allowedFiles);
 
         // check if file is allowed
         foreach ($allowedFiles as $allowedFile) {
-            if ($fileType === $allowedFile) {
+            if ($fileMime === $allowedFile) {
                 
                 // everything is alright beyond this point, carry on uploading
                 $entityManager = $this->getDoctrine()->getManager();
@@ -207,9 +255,6 @@ class ApiController extends AbstractController
     {
         $request = Request::createFromGlobals();
         $pasteId = $request->request->get('paste_id');
-
-
-
         
         $pastes = $this->getDoctrine()->getRepository(Paste::class);
         
@@ -259,6 +304,151 @@ class ApiController extends AbstractController
         return $this->json(['success' => 'true']); 
         
     }
+    
+    /**
+     * @Route("/api/fetch/user", name="fetch_user")
+     */
+    public function fetchUser() // fetch user info.
+    {
+        $request = Request::createFromGlobals();
+        $apiKey = $request->request->get('api_key');
+
+        $users = $this->getDoctrine()->getRepository(User::class);
+
+        $user = $users->findOneBy(['api_key' => $apiKey]);
+        
+        if (!$user) {
+            return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
+        }
+        
+        $pastes = $this->getDoctrine()->getRepository(Paste::class);
+        $files = $this->getDoctrine()->getRepository(File::class);
+        
+        $userPastes = $pastes->findBy(['corr_uid' => $user->getID()]);
+        $userFiles = $files->findBy(['corr_uid' => $user->getID()]);
+        
+        $totalFileSize = 0;
+        $pasteCount = 0;
+        $fileCount = 0;
+        
+        $fs = new Filesystem(); 
+        
+        foreach ($userPastes as $paste){
+            $pasteCount += 1;
+        }
+        foreach ($userFiles as $file){
+            $totalFileSize += filesize($this->getParameter('upload_directory').'/'.$file->getFilename().'.'.$file->getFiletype());
+            $fileCount += 1;
+        }
+        
+        return $this->json(['success' => 'true',
+                            'paste_count' => $pasteCount,
+                            'file_count' => $fileCount,
+                            'total_filesize' => $this->human_filesize($totalFileSize)]); 
+        
+    }
+    
+    /**
+     * @Route("/api/fetch/stats", name="fetch_stats")
+     */
+    public function fetchStats() // fetch global info.
+    {
+        $pastes = $this->getDoctrine()->getRepository(Paste::class);
+        $files = $this->getDoctrine()->getRepository(File::class);
+        
+        $allPastes = $pastes->findAll();
+        $allFiles = $files->findAll();
+        
+        $totalFileSize = 0;
+        $pasteCount = 0;
+        $fileCount = 0;
+        
+        $fs = new Filesystem(); 
+        
+        foreach ($allPastes as $paste){
+            $pasteCount += 1;
+        }
+        foreach ($allFiles as $file){
+            $totalFileSize += filesize($this->getParameter('upload_directory').'/'.$file->getFilename().'.'.$file->getFiletype());
+            $fileCount += 1;
+        }
+        
+        return $this->json(['success' => 'true',
+                            'paste_count' => $pasteCount,
+                            'file_count' => $fileCount,
+                            'total_filesize' => $this->human_filesize($totalFileSize)]); 
+        
+    }    
+      
+    /**
+     * @Route("/api/fetch/files", name="fetch_user_files")
+     */
+    public function fetchUserFiles() // fetch user files.
+    {
+        $request = Request::createFromGlobals();
+        $apiKey = $request->request->get('api_key');
+
+        $users = $this->getDoctrine()->getRepository(User::class);
+
+        $user = $users->findOneBy(['api_key' => $apiKey]);
+        
+        if (!$user) {
+            return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
+        }
+        
+        $files = $this->getDoctrine()->getRepository(File::class);
+
+        $userFiles = $files->findBy(['corr_uid' => $user->getID()]);
+        
+        $outputInfo = array();
+        
+        foreach ($userFiles as $file){
+            $outputInfo[] = array(
+                'org_filename' => $file->getOrgFilename(),
+                'filename' => $file->getFilename(),
+                'filetype' => $file->getFiletype()
+            );
+        }
+        
+        return $this->json(['success' => 'true',
+                            'files' => $outputInfo]); 
+        
+    }
+    
+    /**
+     * @Route("/api/fetch/pastes", name="fetch_user_pastes")
+     */
+    public function fetchUserPastes() // fetch user pastes.
+    {
+        $request = Request::createFromGlobals();
+        $apiKey = $request->request->get('api_key');
+
+        $users = $this->getDoctrine()->getRepository(User::class);
+
+        $user = $users->findOneBy(['api_key' => $apiKey]);
+        
+        if (!$user) {
+            return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
+        }
+        
+        $pastes = $this->getDoctrine()->getRepository(Paste::class);
+
+        $userPastes = $pastes->findBy(['corr_uid' => $user->getID()]);
+        
+        $outputInfo = array();
+        
+        foreach ($userPastes as $paste){
+            $outputInfo[] = array(
+                'id' => $paste->getRealId(),
+                'paste_name' => $paste->getPasteName(),
+            );
+        }
+        
+
+        return $this->json(['success' => 'true',
+                            'pastes' => $outputInfo]); 
+        
+    }    
     // API DEFINTION:
     // all links that are designed to return JSON, and are designed to interface with various programs
     // begin with /api/
@@ -277,8 +467,10 @@ class ApiController extends AbstractController
     // uploading seems p simple, but how should i implement paste recieving?
     // should i do two different routes? 
     
-    //
-    
-    
+    // WORK FOR TOMORRROW
+    // /fetch/user -- get user data (in JSON), show amount of files uploaded, total filesize, time joined.
+    // /fetch/user/files -- get all files of user
+    // /fetch/user/pastes -- get all pastes of user
+    // /fetch/stats -- get global website stats (amount of users, total amount of files, that kind of thing)
 }
 ?>

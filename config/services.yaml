@@ -11,7 +11,39 @@ parameters:
     # how many items to display in /files
     number_of_items: 29
     # allowed filetypes (single comma seperated string, no spaces, remove exe and dll if running on windows)
-    allowed_filetypes: 'ttf,apk,pdf,otf,woff,woff2,png,jpg,jpeg,klwp,tiff,gif,webm,md,pptx,ppsx,odt,odp,docx,xslx,txt,tar.gz,tar.bz2,tar.xz,gz,bz2,xz,7z,tar,zip,opus,flac,mp3,mp4,exe,dll'
+    allowed_filetypes: >- 
+     application/vnd.android.package-archive,
+     application/pdf,
+     font/ttf,
+     font/otf,
+     font/woff,
+     font/woff2,
+     image/png,
+     image/jpg,
+     image/jpeg,
+     image/tiff,
+     image/gif,
+     text/plain,
+     application/vnd.ms-powerpoint,
+     application/x-dosexec,
+     application/vnd.openxmlformats-officedocument.presentationml.presentation,
+     application/vnd.oasis.opendocument.text,
+     application/vnd.oasis.opendocument.presentation,
+     application/msword,
+     application/vnd.openxmlformats-officedocument.wordprocessingml.document,
+     application/vnd.ms-excel,
+     application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,
+     application/x-tar,
+     application/x-gzip,
+     application/x-bzip2,
+     application/x-xz,
+     application/x-7z-compressed,
+     audio/opus,
+     audio/webm,
+     audio/flac,
+     audio/mpeg,
+     video/webm,
+     video/mp4
 
 services:
     # default configuration for services in *this* file

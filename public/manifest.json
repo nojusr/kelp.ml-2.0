@@ -3,12 +3,12 @@
   "name": "kelp's place",
   "icons": [
     {
-      "src": "/images/kelp-logo.png",
+      "src": "/icons/kelp-logo.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/images/kelp-logo-large.png",
+      "src": "/icons/kelp-logo-large.png",
       "type": "image/png",
       "sizes": "512x512"
     }
