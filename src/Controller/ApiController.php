@@ -50,9 +50,8 @@ class ApiController extends AbstractController
     }
     
     
-    
     /**
-     * @Route("/api/upload", name="file_upload")
+     * @Route("/api/upload", name="api_file_upload")
      */
     public function upload() // JSON-only API upload route.
     {
@@ -63,13 +62,11 @@ class ApiController extends AbstractController
 
         $user = $users->findOneBy(['api_key' => $apiKey]);
         
-        $fileSize = $uFile->getClientSize();
+        
 
 
         // error handling
-        if (!$fileSize) {
-            return $this->json(['success' => 'false', 'reason' => 'Uploaded file is empty']);
-        }
+
 
         if (!$uFile) {
             return $this->json(['success' => 'false', 'reason' => 'No file provided or filesize too large']);
@@ -77,6 +74,12 @@ class ApiController extends AbstractController
 
         if (!$user) {
             return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
+        }
+        
+        $fileSize = $uFile->getClientSize();
+
+        if (!$fileSize) {
+            return $this->json(['success' => 'false', 'reason' => 'Uploaded file is empty']);
         }
 
 
@@ -94,8 +97,8 @@ class ApiController extends AbstractController
             return $this->json(['success' => 'false', 'reason' => 'Magic value MIME type does not match the MIME type provided by the client']);
         }
         
-        if ($fileMime === 'text/plain' && $fileType !== 'txt') {
-            return $this->json(['success' => 'false', 'reason' => 'Unsupported or unallowed filetype']);
+        if ($fileMime === ' text/plain') {
+            $fileType = 'txt';
         }
         
         $mediaType = $this->get_media_extension($fileMime);
@@ -108,8 +111,7 @@ class ApiController extends AbstractController
         $allowedFiles = explode(',', $allowedFiles);
 
         // check if file is allowed
-        foreach ($allowedFiles as $allowedFile) {
-            if ($fileMime === $allowedFile) {
+        if(in_array($fileMime,$allowedFiles)){
                 
                 // everything is alright beyond this point, carry on uploading
                 $entityManager = $this->getDoctrine()->getManager();
@@ -141,14 +143,13 @@ class ApiController extends AbstractController
                                     'file_id' => $fileId,
                                     'filename' => $finalName,
                                     'link' => $host.'/u/'.$finalName]);
-            }
         }
 
         return $this->json(['success' => 'false', 'reason' => 'Unsupported or unallowed filetype']);
     }
 
     /**
-     * @Route("/api/upload/delete", name="file_delete")
+     * @Route("/api/upload/delete", name="api_file_delete")
      */
     public function upload_delete() // JSON-only API upload deletion route.
     {
@@ -193,7 +194,7 @@ class ApiController extends AbstractController
     }
 
     /**
-     * @Route("/api/paste", name="paste_upload")
+     * @Route("/api/paste", name="api_paste_upload")
      */
     public function paste() // JSON-only API paste route.
     {
@@ -249,7 +250,7 @@ class ApiController extends AbstractController
     }
 
     /**
-     * @Route("/api/p", name="paste_get")
+     * @Route("/api/p", name="api_paste_get")
      */
     public function getPaste() // Get paste via POST.
     {
@@ -272,7 +273,7 @@ class ApiController extends AbstractController
     }
 
     /**
-     * @Route("/api/paste/delete", name="paste_delete")
+     * @Route("/api/paste/delete", name="api_paste_delete")
      */
     public function deletePaste() // JSON-only API paste deletion route.
     {
@@ -306,7 +307,7 @@ class ApiController extends AbstractController
     }
     
     /**
-     * @Route("/api/fetch/user", name="fetch_user")
+     * @Route("/api/fetch/user", name="api_fetch_user")
      */
     public function fetchUser() // fetch user info.
     {
@@ -349,20 +350,22 @@ class ApiController extends AbstractController
     }
     
     /**
-     * @Route("/api/fetch/stats", name="fetch_stats")
+     * @Route("/api/fetch/stats", name="api_fetch_stats")
      */
     public function fetchStats() // fetch global info.
     {
+        $users = $this->getDoctrine()->getRepository(User::class);    
         $pastes = $this->getDoctrine()->getRepository(Paste::class);
         $files = $this->getDoctrine()->getRepository(File::class);
         
         $allPastes = $pastes->findAll();
         $allFiles = $files->findAll();
+        $allUsers = $users->findAll();
         
         $totalFileSize = 0;
-        $pasteCount = 0;
-        $fileCount = 0;
-        
+        $pasteCount = count($allPastes);
+        $fileCount = count($allFiles);
+        $userCount = count($allUsers);
         $fs = new Filesystem(); 
         
         foreach ($allPastes as $paste){
@@ -376,12 +379,13 @@ class ApiController extends AbstractController
         return $this->json(['success' => 'true',
                             'paste_count' => $pasteCount,
                             'file_count' => $fileCount,
+                            'user_count' => $userCount,
                             'total_filesize' => $this->human_filesize($totalFileSize)]); 
         
     }    
       
     /**
-     * @Route("/api/fetch/files", name="fetch_user_files")
+     * @Route("/api/fetch/files", name="api_fetch_user_files")
      */
     public function fetchUserFiles() // fetch user files.
     {
@@ -416,7 +420,7 @@ class ApiController extends AbstractController
     }
     
     /**
-     * @Route("/api/fetch/pastes", name="fetch_user_pastes")
+     * @Route("/api/fetch/pastes", name="api_fetch_user_pastes")
      */
     public function fetchUserPastes() // fetch user pastes.
     {
@@ -466,8 +470,6 @@ class ApiController extends AbstractController
     // doing pastes....
     // uploading seems p simple, but how should i implement paste recieving?
     // should i do two different routes? 
-    
-    // WORK FOR TOMORRROW
     // /fetch/user -- get user data (in JSON), show amount of files uploaded, total filesize, time joined.
     // /fetch/user/files -- get all files of user
     // /fetch/user/pastes -- get all pastes of user

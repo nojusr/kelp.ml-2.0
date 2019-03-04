@@ -1,12 +1,49 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        {% block stylesheets %}{% endblock %}
-    </head>
-    <body>
-        {% block body %}{% endblock %}
-        {% block javascripts %}{% endblock %}
-    </body>
+	<head>
+		<meta name="description" content="kelp's website">
+		<title>kelp's place</title>
+		<link rel="stylesheet" type="text/css" href="/css/global.css">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		
+		
+		<!--meta tags for chrome and safari integration-->
+		<meta name="theme-color" content="#000000">
+		<link rel="apple-touch-icon" sizes="192x192" href="/icons/kelp-logo.png">
+		<link rel="apple-touch-startup-image" href="/icons/kelp-logo-large.png">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="application-name" content="kelp's place">
+		<meta name="apple-mobile-web-app-title" content="kelp's place">
+		
+		<link rel="manifest" href="/manifest.json">
+	</head>
+	<body>
+		<div class="wrapper">
+			<pre class="title">
+      ___           ___           ___       ___     
+     /\__\         /\  \         /\__\     /\  \    
+    /:/  /        /::\  \       /:/  /    /::\  \   
+   /:/__/        /:/\:\  \     /:/  /    /:/\:\  \  
+  /::\__\____   /::\~\:\  \   /:/  /    /::\~\:\  \ 
+ /:/\:::::\__\ /:/\:\ \:\__\ /:/__/    /:/\:\ \:\__\
+ \/_|:|~~|~    \:\~\:\ \/__/ \:\  \    \/__\:\/:/  /
+    |:|  |      \:\ \:\__\    \:\  \        \::/  / 
+    |:|  |       \:\ \/__/     \:\  \        \/__/  
+    |:|  |        \:\__\        \:\__\              
+     \|__|         \/__/         \/__/              
+			</pre>
+			<p class="separator">---------------------------------------------------------------------------------------------------------------------------</p>
+			<div class="links">
+				{% block links %}
+				{% endblock %}
+			</div>
+			<p class="separator">---------------------------------------------------------------------------------------------------------------------------</p>
+			{% block content %}
+			{% endblock %}
+		</div>
+	</body>
+	
+	
 </html>

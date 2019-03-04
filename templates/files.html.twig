@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block links %}
+			<a href="/">back</a>
+			<a href="/upload">uploads</a>
+			{% if session['username'] is defined %}
+				<a href="/logout">logout</a>
+			{% else %}
+				<a href="/login">login</a>
+			{% endif %}
+{% endblock %}
+
+{% block content %}
+	
+	{% if msg is defined %}
+		<p class="msg">{{ msg }}</p>
+	{% endif %}		
+	{% if session['username'] is defined %}
+		<p>Here are your files, {{session['username']}}.</p>
+		
+		<p>
+			{% if curr_page is defined and page_amount > 0 %}
+				{% if curr_page > 1 %}
+					<a href="{{curr_page-1}}">&lt&lt </a>
+				{% else %}
+					&lt&lt
+				{% endif %}
+				
+				{% for page in range (0, page_amount+1) %}
+					{%if page+1 == curr_page %}
+						{{page+1}}
+					{% else %}
+						<a href="{{page+1}}">{{page+1}}</a>
+					{% endif %}
+				{% endfor %}
+				
+				{% if curr_page <= page_amount %}
+					<a href="{{curr_page+1}}"> &gt&gt</a>
+				{% else %}
+					&gt&gt
+				{% endif %}
+			{% endif %}	
+		</p>
+		{% if files is defined %}
+			<a href="/delete/all" onclick="return confirm('Do you REALLY want to delet all of your files?')">Delete all files (cannot be undone!)</a>
+			<p><a href="/reset">Reset your password</a></p>
+			<table class="files">
+				<thead>
+					<th>filename</th>
+					<th>filetype</th>
+					<th></th>
+				</thead>
+				
+					{% for file in files %}
+						<tr>
+							{% if file[4] is none %} 
+								{#backwards compatibility#}
+								<td class="filename"><a class="link" href="/{{file[3]}}.{{file[2]}}"><span title="{{file[3]}}">{{file[3]}}</span></a></td>
+							{% else %}
+								<td class="filename"><a class="link" href="/{{file[3]}}.{{file[2]}}"><span title="{{file[4]}}">{{file[4]}}</span></a></td>
+							{% endif %}
+							
+							<td>{{file[2]}}</td>
+							<td><a href="/delete/{{file[3]}}.{{file[2]}}">delete</a></td>
+						</tr>
+					{% endfor %}
+			</table>
+		{% else %}
+			<p>you don't have any files</p>
+			<a href="/reset">Reset your password</a>
+		{% endif %}
+	
+	{% else %}
+		<p>not logged in.</p>
+	{% endif %}
+	
+	<img src="" id="thumbnail">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script>
+		function checkURL(url) {
+			return(url.match(/\.(jpeg|jpg|gif|png|tiff)$/) != null);
+		}
+		
+		var $thumb = $("#thumbnail"); 
+		$(document).mousemove(function(e) { 
+			$thumb.offset({ top: e.pageY+10, left: e.pageX+10 }); 
+		});
+		
+		$('.link').mouseover(function() {
+			if (checkURL(this.href)){
+				$("#thumbnail").attr("src",this.href);
+			}
+		});
+		$('.link').mouseleave(function() {
+			$("#thumbnail").attr("src", "");
+		});
+		
+		
+	</script>
+	
+	 
+	
+	
+{% endblock %}
+

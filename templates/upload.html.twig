@@ -1,0 +1,105 @@
+{% extends "base.html.twig" %}
+{% block links %}
+	<a href="/">back</a>
+	<a href="/files">your files</a>
+{% endblock %}
+{% block content %}
+	{% if stats is defined %}
+	<p class="stats">Upload stats:   Disk usage:  {{stats.total_filesize}}   Files: {{stats.file_count}}   Pastes: {{stats.paste_count}}   Users: {{stats.user_count}} </p>
+	{% else %}
+	<p class="stats">Stats unavalable.</p>
+	{% endif %}
+	<p class="separator">---------------------------------------------------------------------------------------------------------------------------</p>
+	<p>You can upload to this site using curl like so:</p>
+	<div class="code">$curl -F'u_clean=on' -F'upload_key=youruploadkey' -F'u_file=@/path/to/your.file' https://kelp.ml/api/upload </div>
+	<p>The command above, assuming that everything is correct, will return nothing but a link</p>
+	
+	{% if msg is defined %}
+		<p class="msg">{{ msg }}</p>
+	{% endif %}
+	{% if link is defined %}
+		<p class="msg"><a href={{link}}>{{link}}</a></p>
+	{% endif %}
+	<form method=post  enctype="multipart/form-data">
+		
+		{% if app.session.get('user') %}
+			{% set acc = app.session.get('user') %}
+			<p>upload key: <input type=text name=upload_key value={{ acc.apikey }} required></p>
+		{% else %}
+			<p>upload key: <input type=text name=upload_key required></p>
+		{% endif %}
+		
+		<div id="u_file_container" style="cursor: pointer">
+			
+			<input type=file name=u_file required>
+			<p>drop a file anywhere on the screen or click here to select a file</p>
+			
+		</div>
+		
+		<input type=submit value=upload >
+	</form>
+	
+	<!-- upload page specific css and scripts-->
+	<style>
+		#u_file_container{
+			margin: auto;
+			text-align: center;
+			height: 6em;
+			border: 1px dashed #dddddd;
+			padding: 5px;
+			margin-top: 10px;
+			margin-bottom: 10px;
+			cursor: pointer;
+			
+		}
+		#u_file_container input{
+			opacity: 0;
+			height: 100%;
+			width: 100%;
+			outline: none;
+			margin: 0;
+			padding: 0;
+			cursor: pointer;
+		}
+		#u_file_container p{
+			transform: translate(-0.1em, -4.7em);
+			padding-left: 10px;
+			padding-right: 10px;
+			pointer-events: none;
+			
+			cursor: pointer;
+		}
+		
+		#u_file_container:hover, #u_file_container:active {
+			background-color: #222222;
+		}
+	</style>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script>
+		$(document).ready(function(){
+			$('#u_file_container input').change(function () {
+				$('#u_file_container p').text(this.files[0].name);
+			});
+			$(window).on("dragover", function(event) {
+				event.preventDefault();  
+				event.stopPropagation();
+				$(this).addClass('dragging');
+			});
+
+			$(window).on("dragleave", function(event) {
+				event.preventDefault();  
+				event.stopPropagation();
+				$(this).removeClass('dragging');
+			});
+
+			$(window).on("drop", function(event) {
+				event.preventDefault();  
+				event.stopPropagation();
+				fi = $('#u_file_container input');
+				fi[0].files = event.originalEvent.dataTransfer.files;
+				$('#u_file_container p').text(event.originalEvent.dataTransfer.files[0].name);
+			});
+		});
+	</script>
+	
+{% endblock %}
