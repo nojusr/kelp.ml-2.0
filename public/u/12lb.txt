@@ -1,1 +1,0 @@
-{"success":"true","filesize":"28.00b","file_id":"12l8","filename":"12l8.txt","link":"http:\/\/127.0.0.1:8000\/u\/12l8.txt"}
