@@ -13,7 +13,7 @@
 	{% if app.request.hasPreviousSession %}
 		{% if app.session.get('user') %}
 			{% set acc = app.session.get('user') %}
-			<p class="greeting">Welcome, {{ acc.username }}.   <a href="/files">your files</a></p>
+			<p class="greeting">welcome, {{ acc.username }}.   <a href="/files">your files</a></p>
 			<p class="separator">---------------------------------------------------------------------------------------------------------------------------</p>
 		{% endif %}
 	{% endif %}

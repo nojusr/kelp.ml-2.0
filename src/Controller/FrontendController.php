@@ -58,6 +58,15 @@ class FrontendController extends AbstractController
         $statData = json_decode($stats->getContent(), true);
         
         if ($request->isMethod('post')) {
+            $response = $this->forward('App\Controller\ApiController::upload');
+            $json = json_decode($response->getContent());
+            
+            if ($json->success === 'true'){
+                return $this->render('upload.html.twig', ['stats'=>$statData, 'link'=>$json->link]);
+            }else{
+                return $this->render('upload.html.twig', ['stats'=>$statData, 'msg'=>$json->reason]);
+            }
+            
             
         }else{
             $userName = $session->get('username');
@@ -85,10 +94,13 @@ class FrontendController extends AbstractController
     {
         $request = Request::createFromGlobals();
         if ($request->isMethod('post')) {
-            //basic unencrypted check for now
             
             $userName = $request->request->get('username');
             $passWord = $request->request->get('password');
+            
+            if (!$userName || !$passWord){
+                return $this->render('login.html.twig', ['msg'=>'Please fill out all fields.']);
+            }
             
             $users = $this->getDoctrine()->getRepository(User::class);
             
@@ -155,9 +167,21 @@ class FrontendController extends AbstractController
                 return $this->render('register.html.twig', ['msg' => 'No invite key provided.']);
             }
             
+            // invite key checking
+            // TODO: regenerate startup key upon startup, also every time somebody registers
             if ('lolmao' !== $inviteTest){
                 return $this->render('register.html.twig', ['msg' => 'Invalid invite key.']);
             }
+            
+            // check if username already exists
+            
+            $users = $this->getDoctrine()->getRepository(User::class);
+            
+            $user = $users->findOneBy(['username' => $userName]);
+            
+            if ($user){
+                return $this->render('register.html.twig', ['msg' => 'User already exists.']);
+            }      
             
             // all checks done, everything is alright
             $newUser = new User();
@@ -182,6 +206,28 @@ class FrontendController extends AbstractController
         }
     }
 
+    /**
+     * @Route("/files", name="files")
+     */
+    public function files(SessionInterface $session)
+    {
+        $request = Request::createFromGlobals();
+        if ($request->isMethod('post')) {
+            
+        }else{
+            $user = $session->get('user');
+            if(!$user){
+                return $this->render('files.html.twig');  
+                
+            }
+            // TODO: finish this
+            $userStats = $this->forward('App\Controller\ApiController::api_fetch_stats');
+            $userFiles = $this->forward('App\Controller\ApiController::api_fetch_user_files');
+            return $this->render('files.html.twig', ['ustats' => $userStats, 'ufiles' => $userFiles]);
+            
+            
+        }
+    }
 
 
 }

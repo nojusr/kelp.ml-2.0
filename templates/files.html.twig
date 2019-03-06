@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html.twig" %}
 {% block links %}
 			<a href="/">back</a>
 			<a href="/upload">uploads</a>
@@ -15,7 +15,7 @@
 		<p class="msg">{{ msg }}</p>
 	{% endif %}		
 	{% if session['username'] is defined %}
-		<p>Here are your files, {{session['username']}}.</p>
+		<p>here are your files, {{session['username']}}.</p>
 		
 		<p>
 			{% if curr_page is defined and page_amount > 0 %}
@@ -41,8 +41,8 @@
 			{% endif %}	
 		</p>
 		{% if files is defined %}
-			<a href="/delete/all" onclick="return confirm('Do you REALLY want to delet all of your files?')">Delete all files (cannot be undone!)</a>
-			<p><a href="/reset">Reset your password</a></p>
+			<a href="/delete/all" onclick="return confirm('Do you REALLY want to delet all of your files?')">delete all files (cannot be undone!)</a>
+			<p><a href="/reset">reset your password</a></p>
 			<table class="files">
 				<thead>
 					<th>filename</th>

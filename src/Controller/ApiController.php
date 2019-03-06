@@ -93,13 +93,20 @@ class ApiController extends AbstractController
         
         // more error checking
         
-        if ($fileMime !== $clientMime) {
-            return $this->json(['success' => 'false', 'reason' => 'Magic value MIME type does not match the MIME type provided by the client']);
-        }
-        
-        if ($fileMime === ' text/plain') {
+        // if client says its ' text/plain', change it's extention to .txt.
+
+        if ($fileMime === ' text/plain' || $clientMime === ' text/plain') {
+            // changing some variables to bypass the error checker below
+            $fileMime = ' text/plain';
+            $clientMime = ' text/plain';
             $fileType = 'txt';
+        }        
+
+        if ($fileMime !== $clientMime) {
+            return $this->json(['success' => 'false', 'reason' => 'Magic value MIME type does not match the MIME type provided by the client', 'clientmime' => $clientMime, 'filemime' => $fileMime]);
         }
+
+
         
         $mediaType = $this->get_media_extension($fileMime);
         
