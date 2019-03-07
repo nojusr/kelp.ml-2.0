@@ -1,11 +1,11 @@
 {% extends "base.html.twig" %}
 {% block links %}
 	<a href="/">back</a>
-	<a href="/files">your files</a>
+	<a href="/files">files</a>
 {% endblock %}
 {% block content %}
-	{% if stats is defined %}
-	<p class="stats">upload stats:   Disk usage:  {{stats.total_filesize}}   Files: {{stats.file_count}}   Pastes: {{stats.paste_count}}   Users: {{stats.user_count}} </p>
+	{% if stats.success is defined and stats.success == 'true' %}
+	<p class="stats">stats:   disk usage:  {{stats.total_filesize}}   files: {{stats.file_count}}   pastes: {{stats.paste_count}}   users: {{stats.user_count}} </p>
 	{% else %}
 	<p class="stats">stats unavalable.</p>
 	{% endif %}

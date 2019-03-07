@@ -2,7 +2,7 @@
 {% block links %}
 	<a href="/rice">rice</a>
 	<a href="/upload">uploads</a>
-	{% if session['username'] is defined %}
+	{% if app.session.get('user') %}
 		<a href="/logout">logout</a>
 	{% else %}
 		<a href="/login">login</a>
@@ -13,7 +13,7 @@
 	{% if app.request.hasPreviousSession %}
 		{% if app.session.get('user') %}
 			{% set acc = app.session.get('user') %}
-			<p class="greeting">welcome, {{ acc.username }}.   <a href="/files">your files</a></p>
+			<p class="greeting">welcome, {{ acc.username }}.   <a href="/files">files</a>   <a href="/pastes">pastes</a>   <a href="/profile">profile</a></p>
 			<p class="separator">---------------------------------------------------------------------------------------------------------------------------</p>
 		{% endif %}
 	{% endif %}

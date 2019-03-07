@@ -5,19 +5,23 @@
 			{% if session['username'] is defined %}
 				<a href="/logout">logout</a>
 			{% else %}
-				<a href="/login">login</a>
+				<a href="/pastes">pastes</a>
 			{% endif %}
 {% endblock %}
 
 {% block content %}
 	
 	{% if msg is defined %}
-		<p class="msg">{{ msg }}</p>
+		<p class="msg">error: {{ msg }}</p>
 	{% endif %}		
-	{% if session['username'] is defined %}
-		<p>here are your files, {{session['username']}}.</p>
+	{% if app.session.get('user') %}
+		{% set acc = app.session.get('user') %}
 		
-		<p>
+		{% if ustats.success is defined and ustats.success == 'true' %}
+		<p class="stats">your stats:   disk usage:  {{ustats.total_filesize}}   files: {{ustats.file_count}}   pastes: {{ustats.paste_count}}</p>
+		{% endif %}
+		<p class="separator">---------------------------------------------------------------------------------------------------------------------------</p>
+		<p>here are your files, {{acc.username}}.</p>
 			{% if curr_page is defined and page_amount > 0 %}
 				{% if curr_page > 1 %}
 					<a href="{{curr_page-1}}">&lt&lt </a>
@@ -40,9 +44,8 @@
 				{% endif %}
 			{% endif %}	
 		</p>
-		{% if files is defined %}
+		{% if ufiles.files|length > 0 %}
 			<a href="/delete/all" onclick="return confirm('Do you REALLY want to delet all of your files?')">delete all files (cannot be undone!)</a>
-			<p><a href="/reset">reset your password</a></p>
 			<table class="files">
 				<thead>
 					<th>filename</th>
@@ -50,23 +53,23 @@
 					<th></th>
 				</thead>
 				
-					{% for file in files %}
+					{% for file in ufiles.files %}
 						<tr>
-							{% if file[4] is none %} 
+							{% if file.org_filename is defined %} 
 								{#backwards compatibility#}
-								<td class="filename"><a class="link" href="/{{file[3]}}.{{file[2]}}"><span title="{{file[3]}}">{{file[3]}}</span></a></td>
+								<td class="filename"><a class="link" href="/u/{{file.filename}}.{{file.filetype}}"><span title="{{file.org_filename}}">{{file.org_filename}}</span></a></td>
 							{% else %}
-								<td class="filename"><a class="link" href="/{{file[3]}}.{{file[2]}}"><span title="{{file[4]}}">{{file[4]}}</span></a></td>
+								
+								<td class="filename"><a class="link" href="/u/{{file.filename}}.{{file.filetype}}"><span title="{{file.filename}}">{{file.filename}}</span></a></td>
 							{% endif %}
 							
-							<td>{{file[2]}}</td>
-							<td><a href="/delete/{{file[3]}}.{{file[2]}}">delete</a></td>
+							<td>{{file.filetype}}</td>
+							<td><a href="/files/delete/{{file.filename}}">delete</a></td>
 						</tr>
 					{% endfor %}
 			</table>
 		{% else %}
 			<p>you don't have any files</p>
-			<a href="/reset">Reset your password</a>
 		{% endif %}
 	
 	{% else %}

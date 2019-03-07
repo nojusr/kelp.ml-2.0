@@ -53,9 +53,8 @@ class ApiController extends AbstractController
     /**
      * @Route("/api/upload", name="api_file_upload")
      */
-    public function upload() // JSON-only API upload route.
+    public function upload(Request $request) // JSON-only API upload route.
     {
-        $request = Request::createFromGlobals();
         $apiKey = $request->request->get('api_key');
         $uFile = $request->files->get('u_file');
         $users = $this->getDoctrine()->getRepository(User::class);
@@ -158,9 +157,8 @@ class ApiController extends AbstractController
     /**
      * @Route("/api/upload/delete", name="api_file_delete")
      */
-    public function upload_delete() // JSON-only API upload deletion route.
+    public function deleteUpload(Request $request) // JSON-only API upload deletion route.
     {
-        $request = Request::createFromGlobals();
         $apiKey = $request->request->get('api_key');
         $fileId = $request->request->get('file_id');
         $users = $this->getDoctrine()->getRepository(User::class);
@@ -171,10 +169,17 @@ class ApiController extends AbstractController
         if (!$fileId) {
             return $this->json(['success' => 'false', 'reason' => 'No file ID provided']);
         }
+        
+       
 
         if (!$user) {
             return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
         }
+        
+        
+        // cleaning up ID to be purely alphanumeric, just for good measure
+         $fileId = preg_replace('/[^a-z\d ]/i', '', $fileId);
+        
         
         $files = $this->getDoctrine()->getRepository(File::class);
         
@@ -203,9 +208,8 @@ class ApiController extends AbstractController
     /**
      * @Route("/api/paste", name="api_paste_upload")
      */
-    public function paste() // JSON-only API paste route.
+    public function paste(Request $request) // JSON-only API paste route.
     {
-        $request = Request::createFromGlobals();
         $apiKey = $request->request->get('api_key');
         $uPaste = $request->request->get('u_paste');
         $pasteName = $request->request->get('paste_name');
@@ -259,9 +263,8 @@ class ApiController extends AbstractController
     /**
      * @Route("/api/p", name="api_paste_get")
      */
-    public function getPaste() // Get paste via POST.
+    public function getPaste(Request $request) // Get paste via POST.
     {
-        $request = Request::createFromGlobals();
         $pasteId = $request->request->get('paste_id');
         
         $pastes = $this->getDoctrine()->getRepository(Paste::class);
@@ -282,9 +285,8 @@ class ApiController extends AbstractController
     /**
      * @Route("/api/paste/delete", name="api_paste_delete")
      */
-    public function deletePaste() // JSON-only API paste deletion route.
+    public function deletePaste(Request $request) // JSON-only API paste deletion route.
     {
-        $request = Request::createFromGlobals();
         $apiKey = $request->request->get('api_key');
         $pasteId = $request->request->get('paste_id');
 
@@ -314,11 +316,10 @@ class ApiController extends AbstractController
     }
     
     /**
-     * @Route("/api/fetch/user", name="api_fetch_user")
+     * @Route("/api/fetch/user", name="api_fetch_user_stats")
      */
-    public function fetchUser() // fetch user info.
+    public function fetchUser(Request $request) // fetch user info.
     {
-        $request = Request::createFromGlobals();
         $apiKey = $request->request->get('api_key');
 
         $users = $this->getDoctrine()->getRepository(User::class);
@@ -326,7 +327,7 @@ class ApiController extends AbstractController
         $user = $users->findOneBy(['api_key' => $apiKey]);
         
         if (!$user) {
-            return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
+            return $this->json(['success' => 'false', 'reason' => 'No matching API key found', 'test' => $apiKey]);
         }
         
         $pastes = $this->getDoctrine()->getRepository(Paste::class);
@@ -375,12 +376,13 @@ class ApiController extends AbstractController
         $userCount = count($allUsers);
         $fs = new Filesystem(); 
         
-        foreach ($allPastes as $paste){
-            $pasteCount += 1;
-        }
+        $tmp = 0;
+        
         foreach ($allFiles as $file){
-            $totalFileSize += filesize($this->getParameter('upload_directory').'/'.$file->getFilename().'.'.$file->getFiletype());
-            $fileCount += 1;
+            $filePath = $this->getParameter('upload_directory').'/'.$file->getFilename().'.'.$file->getFiletype();
+            if (file_exists($filePath)){
+                $totalFileSize += filesize($filePath);
+            }
         }
         
         return $this->json(['success' => 'true',
@@ -394,9 +396,8 @@ class ApiController extends AbstractController
     /**
      * @Route("/api/fetch/files", name="api_fetch_user_files")
      */
-    public function fetchUserFiles() // fetch user files.
+    public function fetchUserFiles(Request $request) // fetch user files.
     {
-        $request = Request::createFromGlobals();
         $apiKey = $request->request->get('api_key');
 
         $users = $this->getDoctrine()->getRepository(User::class);
@@ -429,9 +430,8 @@ class ApiController extends AbstractController
     /**
      * @Route("/api/fetch/pastes", name="api_fetch_user_pastes")
      */
-    public function fetchUserPastes() // fetch user pastes.
+    public function fetchUserPastes(Request $request) // fetch user pastes.
     {
-        $request = Request::createFromGlobals();
         $apiKey = $request->request->get('api_key');
 
         $users = $this->getDoctrine()->getRepository(User::class);

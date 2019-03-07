@@ -51,9 +51,8 @@ class FrontendController extends AbstractController
     /**
      * @Route("/upload", name="upload")
      */
-    public function upload(SessionInterface $session)
+    public function upload(Request $request, SessionInterface $session)
     {
-        $request = Request::createFromGlobals();
         $stats = $this->forward('App\Controller\ApiController::fetchStats');
         $statData = json_decode($stats->getContent(), true);
         
@@ -69,20 +68,11 @@ class FrontendController extends AbstractController
             
             
         }else{
-            $userName = $session->get('username');
-            
-            if (!$userName){
+            $user = $session->get('user');
+            if (!$user){
                 return $this->render('upload.html.twig', ['stats'=>$statData]);
             }else{
-                $users = $this->getDoctrine()->getRepository(User::class);
-
-                $user = $users->findOneBy(['username' => $userName]);
-                if (!$user){
-                    return $this->render('upload.html.twig', ['stats'=>$statData]);
-                }
-                else{
-                    return $this->render('upload.html.twig', ['stats'=>$statData, 'user'=>$user]);
-                }
+                return $this->render('upload.html.twig', ['stats'=>$statData, 'user'=>$user]);
             }
             
         }
@@ -90,9 +80,8 @@ class FrontendController extends AbstractController
     /**
      * @Route("/login", name="login")
      */
-    public function login(SessionInterface $session, UserPasswordEncoderInterface $encoder)
+    public function login(Request $request, SessionInterface $session, UserPasswordEncoderInterface $encoder)
     {
-        $request = Request::createFromGlobals();
         if ($request->isMethod('post')) {
             
             $userName = $request->request->get('username');
@@ -142,9 +131,8 @@ class FrontendController extends AbstractController
     /**
      * @Route("/register", name="register")
      */
-    public function register(UserPasswordEncoderInterface $encoder)
+    public function register(Request $request, UserPasswordEncoderInterface $encoder)
     {
-        $request = Request::createFromGlobals();
         if ($request->isMethod('post')) {
             // registration
             
@@ -209,26 +197,52 @@ class FrontendController extends AbstractController
     /**
      * @Route("/files", name="files")
      */
-    public function files(SessionInterface $session)
+    public function files(Request $request, SessionInterface $session)
     {
-        $request = Request::createFromGlobals();
-        if ($request->isMethod('post')) {
-            
-        }else{
-            $user = $session->get('user');
-            if(!$user){
-                return $this->render('files.html.twig');  
-                
-            }
-            // TODO: finish this
-            $userStats = $this->forward('App\Controller\ApiController::api_fetch_stats');
-            $userFiles = $this->forward('App\Controller\ApiController::api_fetch_user_files');
-            return $this->render('files.html.twig', ['ustats' => $userStats, 'ufiles' => $userFiles]);
-            
+        $user = $session->get('user');
+        if(!$user){
+            return $this->render('files.html.twig');  
             
         }
+        
+        // create internal request, use it to POST to api links to git some data
+        $intReq = Request::create(
+            '',
+            'POST',
+            ['api_key' => $user->getApiKey()]
+        );
+        
+        $userStats = $this->forward('App\Controller\ApiController::fetchUser', array('request' => $intReq));
+        $userFiles = $this->forward('App\Controller\ApiController::fetchUserFiles', array('request' => $intReq));
+        return $this->render('files.html.twig', ['ustats' => json_decode($userStats->getContent()),
+                                                 'ufiles' => json_decode($userFiles->getContent())]);
     }
 
+    /**
+     * @Route("/files/delete/{id}", name="delete_file")
+     */
+    public function deleteFile(Request $request, SessionInterface $session, $id)
+    {
+        $user = $session->get('user');
+        if(!$user){
+            return $this->redirectToRoute('files');  
+        }
+        
+        // create internal request, use it to POST to api links
+        $intReq = Request::create(
+            '',
+            'POST',
+            ['api_key' => $user->getApiKey(),
+             'file_id' => $id]
+        );
+        
+        $response = $this->forward('App\Controller\ApiController::deleteUpload', array('request' => $intReq));
+        
+        return $this->redirectToRoute('files');  
+        
+        
+        
+    }
 
 }
 ?>
