@@ -6,28 +6,35 @@
 
 /*===DESKTOP===*/
 
+/*COLORS*/
+:root {
+  --bg: #000;
+  --fg: #ddd;
+  --fg-shade: #222;
+}
+
 /*GENERAL ELEMENTS*/
 
 html {
   font-family: "main";
-  background-color: #000000;
-  color: #dddddd;
+  background-color: var(--bg);
+  color: var(--fg);
 }
 
 a {
-  color: #dddddd;
+  color: var(--fg);
 }
 
 a:hover {
-  background-color: #222222;
+  background-color: var(--fg-shade);
 }
 
 input {
   font-family: "main";
-  background-color: #000000;
-  color: #dddddd;
+  background-color: var(--bg);
+  color: var(--fg);
   border: none;
-  border-bottom: 1px solid #dddddd;
+  border-bottom: 1px solid var(--fg);
   padding: 4px;
   font-size: 1em;
 }
@@ -38,7 +45,7 @@ table {
 }
 
 th {
-  border-bottom: 1px solid #dddddd;
+  border-bottom: 1px solid var(--fg);
 }
 
 img {
@@ -47,23 +54,26 @@ img {
 
 /*CLASSES*/
 .wrapper {
-  margin: auto;
-  width: 420px;
+  margin-left: 10px;
+  margin-right: 20px;
+  width: auto;
 }
 
 .title {
   white-space: pre;
   margin-bottom: 0px;
-  text-align: center;
+  text-align: left;
+  font-size: 0.5em;
 }
 
 .separator {
   text-align: center;
   white-space: nowrap;
   overflow-x: hidden;
-  margin-top: 0px;
-  margin-bottom: 0px;
+  margin-top: 8px;
+  margin-bottom: 8px;
   overflow-x: hidden;
+  border-top: 1px dashed var(--fg);
 }
 
 .links {
@@ -71,14 +81,14 @@ img {
   width: 100%;
   display: flex;
   flex-wrap: no-wrap;
-  justify-content: space-evenly;
+  justify-content: flex-start;
 }
 
-.links a {
-  width: 110px;
+.links a, .links p {
+  min-width: 50px;
   padding: 3px;
+  margin: 0px;
 }
-
 .greeting {
   white-space: pre;
   margin: 5px;
@@ -87,7 +97,7 @@ img {
 .code {
   white-space: nowrap;
   overflow: auto;
-  background-color: #222222;
+  background-color: var(--fg-shade);
   font-family: monospace;
   padding: 5px;
   font-size: 0.9em;
@@ -98,8 +108,20 @@ img {
   display: none;
 }
 
+.paste{
+    caret-color: var(--fg);
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: var(--bg);
+    color: var(--fg);
+    cursor: text;
+    resize: none;
+    overflow: auto;
+}
+
 .msg {
-  border-left: 1px #dddddd solid;
+  border-left: 1px var(--fg) solid;
   padding-left: 3px;
 }
 
@@ -119,6 +141,10 @@ img {
   padding: 3px;
 }
 
+.paste {
+  white-space: pre;
+}
+
 /* ID'S */
 
 #thumbnail {
@@ -133,12 +159,15 @@ img {
   /*GENERAL ELEMENTS*/
   /*CLASSES*/
   .wrapper {
-    width: 90%;
     font-size: 4vw;
   }
-
+  .links a, .links p {
+    min-width: 70px;
+    padding: 3px;
+    margin: 0px;
+  }
   .title {
-    font-size: 2.5vw;
+    font-size: 1vw;
   }
   .stats {
     font-size: 3.6vw;

@@ -20,8 +20,8 @@
 		{% if ustats.success is defined and ustats.success == 'true' %}
 		<p class="stats">your stats:   disk usage:  {{ustats.total_filesize}}   files: {{ustats.file_count}}   pastes: {{ustats.paste_count}}</p>
 		{% endif %}
-		<p class="separator">---------------------------------------------------------------------------------------------------------------------------</p>
-		<p>here are your files, {{acc.username}}.</p>
+		<p class="separator"></p>
+		
 			{% if curr_page is defined and page_amount > 0 %}
 				{% if curr_page > 1 %}
 					<a href="{{curr_page-1}}">&lt&lt </a>
@@ -45,7 +45,8 @@
 			{% endif %}	
 		</p>
 		{% if ufiles.files|length > 0 %}
-			<a href="/delete/all" onclick="return confirm('Do you REALLY want to delet all of your files?')">delete all files (cannot be undone!)</a>
+			<p>here are your files, {{acc.username}}.</p>
+			<a href="/files/delete/all" onclick="return confirm('Do you REALLY want to delet all of your files?')">delete all files (cannot be undone!)</a>
 			<table class="files">
 				<thead>
 					<th>filename</th>
@@ -75,26 +76,32 @@
 	{% else %}
 		<p>not logged in.</p>
 	{% endif %}
+	<img src="" id="thumbnail" style="overflow: hidden; position: absolute; overflow-x: hidden;">
 	
-	<img src="" id="thumbnail">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 	<script>
 		function checkURL(url) {
 			return(url.match(/\.(jpeg|jpg|gif|png|tiff)$/) != null);
 		}
 		
-		var $thumb = $("#thumbnail"); 
+		var thumb = $('#thumbnail'); 
 		$(document).mousemove(function(e) { 
-			$thumb.offset({ top: e.pageY+10, left: e.pageX+10 }); 
+			var imgheight = $('#thumbnail').outerHeight()+10;
+			var dist = Math.floor($(window).height()-e.pageY);
+			if (dist < imgheight+20){
+				thumb.offset({ top: $(window).height()+$(window).scrollTop()-imgheight-10, left: e.pageX+10 }); 
+			}else{
+				thumb.offset({ top: e.pageY+10, left: e.pageX+10 }); 
+			}
 		});
 		
 		$('.link').mouseover(function() {
 			if (checkURL(this.href)){
-				$("#thumbnail").attr("src",this.href);
+				$('#thumbnail').attr("src",this.href);
 			}
 		});
 		$('.link').mouseleave(function() {
-			$("#thumbnail").attr("src", "");
+			$('#thumbnail').attr("src", "");
 		});
 		
 		

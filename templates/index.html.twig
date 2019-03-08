@@ -1,7 +1,7 @@
 {% extends "base.html.twig" %}
 {% block links %}
-	<a href="/rice">rice</a>
-	<a href="/upload">uploads</a>
+	<a href="/paste">paste</a>
+	<a href="/upload">upload</a>
 	{% if app.session.get('user') %}
 		<a href="/logout">logout</a>
 	{% else %}
@@ -14,7 +14,7 @@
 		{% if app.session.get('user') %}
 			{% set acc = app.session.get('user') %}
 			<p class="greeting">welcome, {{ acc.username }}.   <a href="/files">files</a>   <a href="/pastes">pastes</a>   <a href="/profile">profile</a></p>
-			<p class="separator">---------------------------------------------------------------------------------------------------------------------------</p>
+			<p class="separator"></p>
 		{% endif %}
 	{% endif %}
 	<p>Welcome to my website. I am a programmer from Lithuania, with interests in graphic design, engineering, and video games. This website also serves as an image hosting site, but since i'm a little short on storage space, you will have to contact me for registration.</p>

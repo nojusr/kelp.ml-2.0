@@ -41,6 +41,7 @@ parameters:
      application/x-bzip2,
      application/x-xz,
      application/x-7z-compressed,
+     application/zip,
      audio/opus,
      audio/webm,
      audio/flac,

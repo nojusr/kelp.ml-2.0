@@ -1,0 +1,10 @@
+{% extends "base_wide.html.twig" %}
+{% block links %}
+	<a href="/">back</a>
+	<a href="/pastes">pastes</a>
+{% endblock %}
+{% block content %}
+	<div style="display: flex; flex-direction: column; height: 100%; ">
+	<textarea autofocus required spellcheck="false" class="paste"></textarea>
+	</div>
+{% endblock %}

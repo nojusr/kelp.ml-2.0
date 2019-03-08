@@ -4,30 +4,37 @@
   src: url("../fonts/D-DIN.otf");
 }
 
+/*COLORS*/
+:root {
+  --bg: #000;
+  --fg: #ddd;
+  --fg-shade: #222;
+}
+
 /*===DESKTOP===*/
 
 /*GENERAL ELEMENTS*/
 
 html {
   font-family: "main";
-  background-color: #000000;
-  color: #dddddd;
+  background-color: var(--bg);
+  color: var(--fg);
 }
 
 a {
-  color: #dddddd;
+  color: var(--fg);
 }
 
 a:hover {
-  background-color: #222222;
+  background-color: var(--fg-shade);
 }
 
 input {
   font-family: "main";
-  background-color: #000000;
-  color: #dddddd;
+  background-color: var(--bg);
+  color: var(--fg);
   border: none;
-  border-bottom: 1px solid #dddddd;
+  border-bottom: 1px solid var(--fg);
   padding: 4px;
   font-size: 1em;
 }
@@ -38,7 +45,7 @@ table {
 }
 
 th {
-  border-bottom: 1px solid #dddddd;
+  border-bottom: 1px solid var(--fg);
 }
 
 img {
@@ -48,24 +55,23 @@ img {
 /*CLASSES*/
 .wrapper {
   margin: auto;
-  width: 60%;
-  max-width: 900px;
+  width: 420px;
 }
 
 .title {
-  font-size: 7px;
   white-space: pre;
   margin-bottom: 0px;
-  text-align: left;
+  text-align: center;
 }
 
 .separator {
   text-align: center;
   white-space: nowrap;
   overflow-x: hidden;
-  margin-top: 0px;
-  margin-bottom: 0px;
+  margin-top: 8px;
+  margin-bottom: 8px;
   overflow-x: hidden;
+  border-top: 1px dashed var(--fg);
 }
 
 .links {
@@ -73,7 +79,7 @@ img {
   width: 100%;
   display: flex;
   flex-wrap: no-wrap;
-  justify-content: flex-start;
+  justify-content: space-evenly;
 }
 
 .links a {
@@ -89,7 +95,7 @@ img {
 .code {
   white-space: nowrap;
   overflow: auto;
-  background-color: #222222;
+  background-color: var(--fg-shade);
   font-family: monospace;
   padding: 5px;
   font-size: 0.9em;
@@ -101,7 +107,7 @@ img {
 }
 
 .msg {
-  border-left: 1px #dddddd solid;
+  border-left: 1px var(--fg) solid;
   padding-left: 3px;
 }
 
@@ -111,10 +117,8 @@ img {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.files{
-  float: left;
+.files {
   width: 100%;
-  max-width: 900px;
 }
 
 .stats {
@@ -122,16 +126,6 @@ img {
   margin: 0px;
   padding: 3px;
 }
-.actions {
-  flex-wrap: wrap;
-  align-items: baseline;
-  display: flex;
-  margin: 4px;
-}
-.actions > * {
-  margin-left: 10px;
-}
-
 
 /* ID'S */
 
@@ -142,5 +136,19 @@ img {
   max-height: 300px;
 }
 
+/*===MOBILE===*/
+@media only screen and (max-width: 800px) {
+  /*GENERAL ELEMENTS*/
+  /*CLASSES*/
+  .wrapper {
+    width: 90%;
+    font-size: 4vw;
+  }
 
-
+  .title {
+    font-size: 2.5vw;
+  }
+  .stats {
+    font-size: 3.6vw;
+  }
+}

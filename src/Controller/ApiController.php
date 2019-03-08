@@ -94,7 +94,7 @@ class ApiController extends AbstractController
         
         // if client says its ' text/plain', change it's extention to .txt.
 
-        if ($fileMime === ' text/plain' || $clientMime === ' text/plain') {
+        if (substr( $fileMime, 0, 5 ) === ' text' || substr( $clientMime, 0, 5 ) === ' text') {
             // changing some variables to bypass the error checker below
             $fileMime = ' text/plain';
             $clientMime = ' text/plain';
@@ -155,6 +155,55 @@ class ApiController extends AbstractController
     }
 
     /**
+     * @Route("/api/upload/delete/all", name="api_file_delete_all")
+     */
+    public function deleteAllUploads(Request $request) // JSON-only API all upload deletion route.
+    {
+        //WARNING: CONFIRM BEFORE RUNNING THIS
+        $apiKey = $request->request->get('api_key');
+        $users = $this->getDoctrine()->getRepository(User::class);
+
+        $user = $users->findOneBy(['api_key' => $apiKey]);
+        
+        // error handling
+        if (!$user) {
+            return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
+        }
+        
+        
+        
+        $files = $this->getDoctrine()->getRepository(File::class);
+        
+        $allUserFiles = $files->findBy(['corr_uid' => $user->getID()]);
+        
+        if (!$allUserFiles){
+            return $this->json(['success' => 'false', 'reason' => 'User has no files']);
+        }
+        
+        // from this point forward, everything should be in order
+        
+        $entityManager = $this->getDoctrine()->getManager();
+        $fs = new Filesystem(); 
+        
+        
+        foreach ($allUserFiles as $file){
+                // deleting from db
+                
+                $entityManager->remove($file);
+
+                
+                // deleting from fs
+                $fs = new Filesystem(); 
+                $fs->remove($this->getParameter('upload_directory').'/'.$file->getFilename().'.'.$file->getFiletype());
+        
+        
+        }
+        
+        $entityManager->flush();        
+        return $this->json(['success' => 'true']);
+    }
+
+    /**
      * @Route("/api/upload/delete", name="api_file_delete")
      */
     public function deleteUpload(Request $request) // JSON-only API upload deletion route.
@@ -204,6 +253,7 @@ class ApiController extends AbstractController
         
         
     }
+
 
     /**
      * @Route("/api/paste", name="api_paste_upload")
@@ -266,6 +316,9 @@ class ApiController extends AbstractController
     public function getPaste(Request $request) // Get paste via POST.
     {
         $pasteId = $request->request->get('paste_id');
+
+        // cleaning up ID to be purely alphanumeric, just for good measure
+        $pasteId = preg_replace('/[^a-z\d ]/i', '', $pasteId);
         
         $pastes = $this->getDoctrine()->getRepository(Paste::class);
         

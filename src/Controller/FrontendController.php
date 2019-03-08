@@ -42,13 +42,6 @@ class FrontendController extends AbstractController
         return $this->render('index.html.twig');
     }
     /**
-     * @Route("/rice", name="rice")
-     */
-    public function rice()
-    {
-        return $this->render('rice.html.twig');
-    }
-    /**
      * @Route("/upload", name="upload")
      */
     public function upload(Request $request, SessionInterface $session)
@@ -219,6 +212,28 @@ class FrontendController extends AbstractController
     }
 
     /**
+     * @Route("/files/delete/all", name="delete_all_files")
+     */
+    public function deleteAllFiles(Request $request, SessionInterface $session)
+    {
+        $user = $session->get('user');
+        if(!$user){
+            return $this->redirectToRoute('files');  
+        }
+        
+        // create internal request, use it to POST to api links
+        $intReq = Request::create(
+            '',
+            'POST',
+            ['api_key' => $user->getApiKey()]
+        );
+        $response = $this->forward('App\Controller\ApiController::deleteAllUploads', array('request' => $intReq));
+        return $this->redirectToRoute('files');  
+        
+ 
+    }
+
+    /**
      * @Route("/files/delete/{id}", name="delete_file")
      */
     public function deleteFile(Request $request, SessionInterface $session, $id)
@@ -239,9 +254,47 @@ class FrontendController extends AbstractController
         $response = $this->forward('App\Controller\ApiController::deleteUpload', array('request' => $intReq));
         
         return $this->redirectToRoute('files');  
+ 
+    }
+
+    /**
+     * @Route("/p/{id}", name="view_paste")
+     */
+    public function viewPaste(Request $request, $id)
+    {
+        // create internal request, use it to POST to api links
+        $intReq = Request::create(
+            '',
+            'POST',
+            ['paste_id' => $id]
+        );
+        $paste = $this->forward('App\Controller\ApiController::getPaste', array('request' => $intReq));
+        return $this->render('view_paste.html.twig', ['paste' => json_decode($paste->getContent())]);   
+ 
+    }
+
+    /**
+     * @Route("/paste", name="create_paste")
+     */
+    public function createPaste(Request $request)
+    {
+        return $this->render('create_paste.html.twig');   
+ 
+    }
+    
+    /**
+     * @Route("/easter", name="change_color")
+     */
+    public function changeColor(SessionInterface $session)
+    {
+        $session->start();
         
-        
-        
+        if ($session->get('color')){
+            $session->remove('color');
+        }else{
+            $session->set('color', 'white');   
+        }
+        return $this->redirectToRoute('index'); 
     }
 
 }

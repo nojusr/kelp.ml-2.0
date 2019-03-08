@@ -9,7 +9,7 @@
 	{% else %}
 	<p class="stats">stats unavalable.</p>
 	{% endif %}
-	<p class="separator">---------------------------------------------------------------------------------------------------------------------------</p>
+	<p class="separator"></p>
 	<p>you can upload to this site using curl like so:</p>
 	<div class="code">$curl -F'api_key=yourapikey' -F'u_file=@/path/to/your.file' https://kelp.ml/api/upload </div>
 	<p>the command above, assuming that everything is correct, will return nothing but a link</p>
@@ -45,7 +45,7 @@
 			margin: auto;
 			text-align: center;
 			height: 6em;
-			border: 1px dashed #dddddd;
+			border: 1px dashed var(--fg);
 			padding: 5px;
 			margin-top: 10px;
 			margin-bottom: 10px;
@@ -71,7 +71,7 @@
 		}
 		
 		#u_file_container:hover, #u_file_container:active {
-			background-color: #222222;
+			background-color: var(--fg-shade);
 		}
 	</style>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
