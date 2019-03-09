@@ -44,64 +44,60 @@
 				{% endif %}
 			{% endif %}
 		</p>
-		{% if ufiles.files|length > 0 %}
-			<p>here are your files, {{acc.username}}.</p>
-			<a href="/files/delete/all" onclick="return confirm('Do you REALLY want to delet all of your files?')">delete all files (cannot be undone!)</a>
+		{% if upastes.pastes|length > 0 %}
+			<p>here are your pastes, {{acc.username}}.</p>
+			<a href="/files/delete/all" onclick="return confirm('Do you REALLY want to delete all of your pastes?')">delete all pastes (cannot be undone!)</a>
 			<table class="files">
 				<thead>
-					<th>filename</th>
-					<th>filetype</th>
-					<th></th>
+					<th>paste id</th>
+					<th>paste title</th>
+          <th></th>
 				</thead>
 
-					{% for file in ufiles.files %}
+					{% for paste in upastes.pastes %}
 						<tr>
-							{% if file.org_filename is defined %}
-								{#backwards compatibility#}
-								<td class="filename"><a class="link" href="/u/{{file.filename}}.{{file.filetype}}"><span title="{{file.org_filename}}">{{file.org_filename}}</span></a></td>
-							{% else %}
-
-								<td class="filename"><a class="link" href="/u/{{file.filename}}.{{file.filetype}}"><span title="{{file.filename}}">{{file.filename}}</span></a></td>
-							{% endif %}
-
-							<td>{{file.filetype}}</td>
-							<td><a href="/files/delete/{{file.filename}}">delete</a></td>
-						</tr>
+              <td>{{paste.id}}</td>
+							<td class="filename"><a class="link" href="/p/{{paste.id}}"><span title="{{paste.paste_name}}}">{{paste.paste_name}}</span></a></td>
+              <td><a href="/p/delete/{{paste.id}}">delete</a></td>
+            </tr>
 					{% endfor %}
 			</table>
 		{% else %}
-			<p>you don't have any files</p>
+			<p>you don't have any pastes</p>
 		{% endif %}
 
 	{% else %}
 		<p>not logged in.</p>
 	{% endif %}
-	<img src="" id="thumbnail" style="overflow: hidden; position: absolute; overflow-x: hidden;"></div>
+	<div id="pastehover" style="background-color: var(--bg); border: 1px solid var(--fg-shade); white-space: pre; overflow: hidden; position: absolute; overflow-x: hidden;"></div>
 
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 	<script>
-		function checkURL(url) {
-			return(url.match(/\.(jpeg|jpg|gif|png|tiff)$/) != null);
-		}
 
-		var thumb = $('#thumbnail');
+		var txt = $('#pastehover');
 		$(document).mousemove(function(e) {
-			var imgheight = $('#thumbnail').outerHeight()+10;
+			var pasteheight = $('#pastehover').outerHeight()+10;
 			var dist = Math.floor($(window).height()-e.pageY);
-			if (dist < imgheight+20){
-				thumb.offset({ top: $(window).height()+$(window).scrollTop()-imgheight-10, left: e.pageX+10 });
+			if (dist < pasteheight+20){
+				txt.offset({ top: $(window).height()+$(window).scrollTop()-pasteheight-10, left: e.pageX+10 });
 			}else{
-				thumb.offset({ top: e.pageY+10, left: e.pageX+10 });
+				txt.offset({ top: e.pageY+10, left: e.pageX+10 });
 			}
 		});
 
 		$('.link').mouseover(function() {
-			if (checkURL(this.href)){
-				$('#thumbnail').attr("src",this.href);
-			}
+      var last_part=this.href.substr(this.href.lastIndexOf('/') + 1);
+
+      $.get( 'p/raw/'+last_part)
+      .done(function( data ) {
+        txt.text(data);
+        txt.css('padding', '2px');
+      });
+
 		});
 		$('.link').mouseleave(function() {
-			$('#thumbnail').attr("src", "");
+			txt.text("");
+      txt.css('padding', '0px');
 		});
 
 

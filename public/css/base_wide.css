@@ -54,6 +54,7 @@ img {
 
 /*CLASSES*/
 .wrapper {
+  height: 100vh;
   margin-left: 10px;
   margin-right: 20px;
   width: auto;
@@ -109,15 +110,20 @@ img {
 }
 
 .paste{
-    caret-color: var(--fg);
-    width: 100%;
-    height: 100%;
-    border: none;
-    background: var(--bg);
-    color: var(--fg);
-    cursor: text;
-    resize: none;
-    overflow: auto;
+  caret-color: var(--fg);
+  width: 100%;
+  height: 70%;
+  display: block;
+  border: none;
+  overflow-y: hidden;
+  background: var(--bg);
+  color: var(--fg);
+  cursor: text;
+  resize: none;
+  overflow: auto;
+  box-sizing: border-box;         /* For IE and modern versions of Chrome */
+  -moz-box-sizing: border-box;    /* For Firefox                          */
+  -webkit-box-sizing: border-box;
 }
 
 .msg {
@@ -152,6 +158,10 @@ img {
   width: auto;
   max-width: 300px;
   max-height: 300px;
+}
+#pasteform{
+  height: 70vh;
+
 }
 
 /*===MOBILE===*/

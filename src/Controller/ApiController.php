@@ -22,7 +22,7 @@ class ApiController extends AbstractController
 
         return sprintf("%.{$dec}f", $bytes / pow(1024, $factor)) . @$size[$factor];
     }
-    
+
     function get_file_type($file) { // gets file MIME type by checking it's magic value.
         if(function_exists('shell_exec') === TRUE) {
             $dump = shell_exec(sprintf('file -bi %s', escapeshellarg($file)));
@@ -31,11 +31,11 @@ class ApiController extends AbstractController
         }
             return FALSE;
     }
-    
+
     function get_media_extension($mimeType) { // used for changing the mimetype of media files, in order to not fool the end user
         $mimeMap = [ ' image/png' => 'png',
                      ' image/jpg' => 'jpg',
-                     ' image/jpeg' => 'jpeg',    
+                     ' image/jpeg' => 'jpeg',
                      ' image/tiff' => 'tiff',
                      ' image/gif' => 'gif',
                      ' audio/opus'=> 'opus',
@@ -45,11 +45,11 @@ class ApiController extends AbstractController
                      ' video/webm' => 'webm',
                      ' video/mp4' => 'mp4'
                    ];
-                   
+
         return isset($mimeMap[$mimeType]) === true ? $mimeMap[$mimeType] : false;
     }
-    
-    
+
+
     /**
      * @Route("/api/upload", name="api_file_upload")
      */
@@ -60,8 +60,8 @@ class ApiController extends AbstractController
         $users = $this->getDoctrine()->getRepository(User::class);
 
         $user = $users->findOneBy(['api_key' => $apiKey]);
-        
-        
+
+
 
 
         // error handling
@@ -74,7 +74,7 @@ class ApiController extends AbstractController
         if (!$user) {
             return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
         }
-        
+
         $fileSize = $uFile->getClientSize();
 
         if (!$fileSize) {
@@ -85,13 +85,13 @@ class ApiController extends AbstractController
         $fileName = explode('.', $uFile->getClientOriginalName());
         $realName = $fileName[0];
         $fileType = implode('.', array_slice($fileName, 1));
-        
+
         // getting both the magic value mimetype and the mimetype provided by the client
         $fileMime = ' '.$this->get_file_type($uFile);
         $clientMime = ' '.$uFile->getMimeType();
-        
+
         // more error checking
-        
+
         // if client says its ' text/plain', change it's extention to .txt.
 
         if (substr( $fileMime, 0, 5 ) === ' text' || substr( $clientMime, 0, 5 ) === ' text') {
@@ -99,26 +99,26 @@ class ApiController extends AbstractController
             $fileMime = ' text/plain';
             $clientMime = ' text/plain';
             $fileType = 'txt';
-        }        
+        }
 
         if ($fileMime !== $clientMime) {
             return $this->json(['success' => 'false', 'reason' => 'Magic value MIME type does not match the MIME type provided by the client', 'clientmime' => $clientMime, 'filemime' => $fileMime]);
         }
 
 
-        
+
         $mediaType = $this->get_media_extension($fileMime);
-        
+
         if ($mediaType !== false){
             $fileType = $mediaType;
         }
-                
+
         $allowedFiles = $this->getParameter('allowed_filetypes');
         $allowedFiles = explode(',', $allowedFiles);
 
         // check if file is allowed
         if(in_array($fileMime,$allowedFiles)){
-                
+
                 // everything is alright beyond this point, carry on uploading
                 $entityManager = $this->getDoctrine()->getManager();
                 $dbFile = new File(); // file entry in database
@@ -132,7 +132,7 @@ class ApiController extends AbstractController
                 $entityManager->flush();
 
                 // now that we got it's id, we can generate an actual filename
-                $fileId = strval($dbFile->getID() + 50000);
+                $fileId = strval($dbFile->getID() + 500000);
                 $fileId = base_convert($fileId, 10, 36);
                 $dbFile->setFilename($fileId);
 
@@ -164,42 +164,42 @@ class ApiController extends AbstractController
         $users = $this->getDoctrine()->getRepository(User::class);
 
         $user = $users->findOneBy(['api_key' => $apiKey]);
-        
+
         // error handling
         if (!$user) {
             return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
         }
-        
-        
-        
+
+
+
         $files = $this->getDoctrine()->getRepository(File::class);
-        
+
         $allUserFiles = $files->findBy(['corr_uid' => $user->getID()]);
-        
+
         if (!$allUserFiles){
             return $this->json(['success' => 'false', 'reason' => 'User has no files']);
         }
-        
+
         // from this point forward, everything should be in order
-        
+
         $entityManager = $this->getDoctrine()->getManager();
-        $fs = new Filesystem(); 
-        
-        
+        $fs = new Filesystem();
+
+
         foreach ($allUserFiles as $file){
                 // deleting from db
-                
+
                 $entityManager->remove($file);
 
-                
+
                 // deleting from fs
-                $fs = new Filesystem(); 
+                $fs = new Filesystem();
                 $fs->remove($this->getParameter('upload_directory').'/'.$file->getFilename().'.'.$file->getFiletype());
-        
-        
+
+
         }
-        
-        $entityManager->flush();        
+
+        $entityManager->flush();
         return $this->json(['success' => 'true']);
     }
 
@@ -213,45 +213,45 @@ class ApiController extends AbstractController
         $users = $this->getDoctrine()->getRepository(User::class);
 
         $user = $users->findOneBy(['api_key' => $apiKey]);
-        
+
         // error handling
         if (!$fileId) {
             return $this->json(['success' => 'false', 'reason' => 'No file ID provided']);
         }
-        
-       
+
+
 
         if (!$user) {
             return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
         }
-        
-        
+
+
         // cleaning up ID to be purely alphanumeric, just for good measure
          $fileId = preg_replace('/[^a-z\d ]/i', '', $fileId);
-        
-        
+
+
         $files = $this->getDoctrine()->getRepository(File::class);
-        
+
         $file = $files->findOneBy(['corr_uid' => $user->getID(), 'filename' => $fileId]);
-        
+
         if (!$file){
             return $this->json(['success' => 'false', 'reason' => 'File not found']);
         }
-        
+
         // from this point forward, everything should be in order
-        
+
         // deleting from db
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->remove($file);
         $entityManager->flush();
-        
+
         // deleting from fs
-        $fs = new Filesystem(); 
+        $fs = new Filesystem();
         $fs->remove($this->getParameter('upload_directory').'/'.$file->getFilename().'.'.$file->getFiletype());
-        
+
         return $this->json(['success' => 'true']);
-        
-        
+
+
     }
 
 
@@ -266,48 +266,48 @@ class ApiController extends AbstractController
         $users = $this->getDoctrine()->getRepository(User::class);
 
         $user = $users->findOneBy(['api_key' => $apiKey]);
-        
+
         if (!$user) {
             return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
         }
-        
+
         if (!$uPaste) {
             return $this->json(['success' => 'false', 'reason' => 'Paste text wasn\'t provided']);
         }
-        
+
         $paste = new Paste();
-        
+
         $paste->setCorrUid($user->getID());
-        
+
         if (!$pasteName) {
             $paste->setPasteName("null");
         }
         else {
             $paste->setPasteName($pasteName);
         }
-        
+
         $paste->setPasteText($uPaste);
-        
-        
+
+
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->persist($paste);
-        $entityManager->flush(); 
-        
-        // commit the object to the db once, get it's db ID, calculate 
+        $entityManager->flush();
+
+        // commit the object to the db once, get it's db ID, calculate
         // it's link ID, commit it again with the link ID
         $realId = strval($paste->getID() + 200);
         $realId = base_convert($realId, 10, 36);
         $paste->setRealId($realId);
-        
+
         $entityManager->persist($paste);
         $entityManager->flush();
-        
+
         $host = $request->getSchemeAndHttpHost();
-        
-        return $this->json(['success' => 'true', 
+
+        return $this->json(['success' => 'true',
                             'api_link' => $host.'/api/p/'.$realId,
                             'web_link' => $host.'/p/'.$realId]);
-        
+
     }
 
     /**
@@ -319,20 +319,20 @@ class ApiController extends AbstractController
 
         // cleaning up ID to be purely alphanumeric, just for good measure
         $pasteId = preg_replace('/[^a-z\d ]/i', '', $pasteId);
-        
+
         $pastes = $this->getDoctrine()->getRepository(Paste::class);
-        
+
         $paste = $pastes->findOneBy(['real_id' => $pasteId]);
-        
+
         if (!$paste){
             return $this->json(['success' => 'false', 'reason' => 'Paste not found']);
         }
-        
+
         return $this->json(['success' => 'true',
                             'paste_name' => $paste->getPasteName(),
                             'paste_text' => $paste->getPasteText()]);
-        
-        
+
+
     }
 
     /**
@@ -346,28 +346,28 @@ class ApiController extends AbstractController
         $users = $this->getDoctrine()->getRepository(User::class);
 
         $user = $users->findOneBy(['api_key' => $apiKey]);
-        
+
         if (!$user) {
             return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
         }
-        
+
         $pastes = $this->getDoctrine()->getRepository(Paste::class);
-        
+
         $paste = $pastes->findOneBy(['corr_uid' => $user->getID(), 'real_id' => $pasteId]);
-        
+
         if (!$paste){
             return $this->json(['success' => 'false', 'reason' => 'Paste not found']);
         }
-        
+
         // deleting from db
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->remove($paste);
-        $entityManager->flush();       
-        
-        return $this->json(['success' => 'true']); 
-        
+        $entityManager->flush();
+
+        return $this->json(['success' => 'true']);
+
     }
-    
+
     /**
      * @Route("/api/fetch/user", name="api_fetch_user_stats")
      */
@@ -378,23 +378,23 @@ class ApiController extends AbstractController
         $users = $this->getDoctrine()->getRepository(User::class);
 
         $user = $users->findOneBy(['api_key' => $apiKey]);
-        
+
         if (!$user) {
             return $this->json(['success' => 'false', 'reason' => 'No matching API key found', 'test' => $apiKey]);
         }
-        
+
         $pastes = $this->getDoctrine()->getRepository(Paste::class);
         $files = $this->getDoctrine()->getRepository(File::class);
-        
+
         $userPastes = $pastes->findBy(['corr_uid' => $user->getID()]);
         $userFiles = $files->findBy(['corr_uid' => $user->getID()]);
-        
+
         $totalFileSize = 0;
         $pasteCount = 0;
         $fileCount = 0;
-        
-        $fs = new Filesystem(); 
-        
+
+        $fs = new Filesystem();
+
         foreach ($userPastes as $paste){
             $pasteCount += 1;
         }
@@ -402,50 +402,50 @@ class ApiController extends AbstractController
             $totalFileSize += filesize($this->getParameter('upload_directory').'/'.$file->getFilename().'.'.$file->getFiletype());
             $fileCount += 1;
         }
-        
+
         return $this->json(['success' => 'true',
                             'paste_count' => $pasteCount,
                             'file_count' => $fileCount,
-                            'total_filesize' => $this->human_filesize($totalFileSize)]); 
-        
+                            'total_filesize' => $this->human_filesize($totalFileSize)]);
+
     }
-    
+
     /**
      * @Route("/api/fetch/stats", name="api_fetch_stats")
      */
     public function fetchStats() // fetch global info.
     {
-        $users = $this->getDoctrine()->getRepository(User::class);    
+        $users = $this->getDoctrine()->getRepository(User::class);
         $pastes = $this->getDoctrine()->getRepository(Paste::class);
         $files = $this->getDoctrine()->getRepository(File::class);
-        
+
         $allPastes = $pastes->findAll();
         $allFiles = $files->findAll();
         $allUsers = $users->findAll();
-        
+
         $totalFileSize = 0;
         $pasteCount = count($allPastes);
         $fileCount = count($allFiles);
         $userCount = count($allUsers);
-        $fs = new Filesystem(); 
-        
+        $fs = new Filesystem();
+
         $tmp = 0;
-        
+
         foreach ($allFiles as $file){
             $filePath = $this->getParameter('upload_directory').'/'.$file->getFilename().'.'.$file->getFiletype();
             if (file_exists($filePath)){
                 $totalFileSize += filesize($filePath);
             }
         }
-        
+
         return $this->json(['success' => 'true',
                             'paste_count' => $pasteCount,
                             'file_count' => $fileCount,
                             'user_count' => $userCount,
-                            'total_filesize' => $this->human_filesize($totalFileSize)]); 
-        
-    }    
-      
+                            'total_filesize' => $this->human_filesize($totalFileSize)]);
+
+    }
+
     /**
      * @Route("/api/fetch/files", name="api_fetch_user_files")
      */
@@ -456,17 +456,17 @@ class ApiController extends AbstractController
         $users = $this->getDoctrine()->getRepository(User::class);
 
         $user = $users->findOneBy(['api_key' => $apiKey]);
-        
+
         if (!$user) {
             return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
         }
-        
+
         $files = $this->getDoctrine()->getRepository(File::class);
 
         $userFiles = $files->findBy(['corr_uid' => $user->getID()]);
-        
+
         $outputInfo = array();
-        
+
         foreach ($userFiles as $file){
             $outputInfo[] = array(
                 'org_filename' => $file->getOrgFilename(),
@@ -474,12 +474,12 @@ class ApiController extends AbstractController
                 'filetype' => $file->getFiletype()
             );
         }
-        
+
         return $this->json(['success' => 'true',
-                            'files' => $outputInfo]); 
-        
+                            'files' => $outputInfo]);
+
     }
-    
+
     /**
      * @Route("/api/fetch/pastes", name="api_fetch_user_pastes")
      */
@@ -490,29 +490,29 @@ class ApiController extends AbstractController
         $users = $this->getDoctrine()->getRepository(User::class);
 
         $user = $users->findOneBy(['api_key' => $apiKey]);
-        
+
         if (!$user) {
             return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
         }
-        
+
         $pastes = $this->getDoctrine()->getRepository(Paste::class);
 
         $userPastes = $pastes->findBy(['corr_uid' => $user->getID()]);
-        
+
         $outputInfo = array();
-        
+
         foreach ($userPastes as $paste){
             $outputInfo[] = array(
                 'id' => $paste->getRealId(),
                 'paste_name' => $paste->getPasteName(),
             );
         }
-        
+
 
         return $this->json(['success' => 'true',
-                            'pastes' => $outputInfo]); 
-        
-    }    
+                            'pastes' => $outputInfo]);
+
+    }
     // API DEFINTION:
     // all links that are designed to return JSON, and are designed to interface with various programs
     // begin with /api/
@@ -520,7 +520,7 @@ class ApiController extends AbstractController
     // all links that serve publicly accessibale data are prefixed with /api/get
     // all links that serve private data OR do private functions are prefixed with /api/get
     //
-    // POST LINKS: 
+    // POST LINKS:
     // post file: /api/upload
     // post paste: /api/paste
     // get file: /u/file.extension
@@ -529,7 +529,7 @@ class ApiController extends AbstractController
     // get paste (in JSON): /api/p
     // doing pastes....
     // uploading seems p simple, but how should i implement paste recieving?
-    // should i do two different routes? 
+    // should i do two different routes?
     // /fetch/user -- get user data (in JSON), show amount of files uploaded, total filesize, time joined.
     // /fetch/user/files -- get all files of user
     // /fetch/user/pastes -- get all pastes of user

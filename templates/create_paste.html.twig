@@ -4,7 +4,18 @@
 	<a href="/pastes">pastes</a>
 {% endblock %}
 {% block content %}
-	<div style="display: flex; flex-direction: column; height: 100%; ">
-	<textarea autofocus required spellcheck="false" class="paste"></textarea>
-	</div>
+	{% if msg is defined %}
+		<p class="msg">{{ msg }}</p>
+	{% endif %}
+	<form method=post id="pasteform" enctype="multipart/form-data">
+	{% if app.session.get('user') %}
+		{% set acc = app.session.get('user') %}
+		<p>api key: <input type=text name=api_key value={{ acc.apikey }} required></p>
+	{% else %}
+		<p>api key: <input type=text name=api_key required></p>
+	{% endif %}
+	<p style="white-space: pre;">paste name: <input type = "text" name="paste_name">   <input type=submit value=paste ></p>
+	<textarea autofocus required spellcheck="false" form="pasteform" class="paste" name="u_paste"></textarea>
+	</form>
+
 {% endblock %}
