@@ -340,9 +340,8 @@ class ApiController extends AbstractController
      */
     public function deletePaste(Request $request) // JSON-only API paste deletion route.
     {
+        // WARNING: CONFIRM IN FRONTEND BEFORE SENDING REQUEST
         $apiKey = $request->request->get('api_key');
-        $pasteId = $request->request->get('paste_id');
-
         $users = $this->getDoctrine()->getRepository(User::class);
 
         $user = $users->findOneBy(['api_key' => $apiKey]);
@@ -362,6 +361,45 @@ class ApiController extends AbstractController
         // deleting from db
         $entityManager = $this->getDoctrine()->getManager();
         $entityManager->remove($paste);
+        $entityManager->flush();
+
+        return $this->json(['success' => 'true']);
+
+    }
+
+    /**
+     * @Route("/api/paste/delete/all", name="api_paste_delete_all")
+     */
+    public function deleteAllPastes(Request $request) // JSON-only API paste deletion route.
+    {
+        $apiKey = $request->request->get('api_key');
+        $pasteId = $request->request->get('paste_id');
+
+        $users = $this->getDoctrine()->getRepository(User::class);
+
+        $user = $users->findOneBy(['api_key' => $apiKey]);
+
+        if (!$user) {
+            return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
+        }
+
+        $pastes = $this->getDoctrine()->getRepository(Paste::class);
+
+        $allUserPastes = $pastes->findBy(['corr_uid' => $user->getID()]);
+
+        if (!$allUserPastes){
+            return $this->json(['success' => 'false', 'reason' => 'User has no pastes']);
+        }
+
+
+        // from this point forward, everything should be in order
+
+        $entityManager = $this->getDoctrine()->getManager();
+
+        foreach ($allUserPastes as $paste) {
+          $entityManager->remove($paste);
+        }
+
         $entityManager->flush();
 
         return $this->json(['success' => 'true']);

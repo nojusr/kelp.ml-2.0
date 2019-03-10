@@ -33,7 +33,6 @@ class FrontendController extends AbstractController
 
 
 
-
     /**
      * @Route("/", name="index")
      */
@@ -149,8 +148,9 @@ class FrontendController extends AbstractController
             }
 
             // invite key checking
-            // TODO: regenerate startup key upon startup, also every time somebody registers
+            // TODO: regenerate invite key upon startup, also every time somebody registers
             if ('lolmao' !== $inviteTest){
+                echo $this->inviteKey.'<br>';
                 return $this->render('register.html.twig', ['msg' => 'Invalid invite key.']);
             }
 
@@ -186,6 +186,70 @@ class FrontendController extends AbstractController
 
         }
     }
+
+    /**
+     * @Route("/profile", name="view_profile")
+     */
+    public function viewProfile(Request $request, SessionInterface $session, UserPasswordEncoderInterface $encoder)
+    {
+      $user = $session->get('user');
+      if(!$user){
+          return $this->redirectToRoute('index');
+      }
+
+      // create internal request, use it to POST to api links
+      $intReq = Request::create(
+          '',
+          'POST',
+          ['api_key' => $user->getApiKey()]
+      );
+
+      $userStats = $this->forward('App\Controller\ApiController::fetchUser', array('request' => $intReq));
+
+      if ($request->isMethod('post')) {
+          // password reset
+
+          $oldPwd = $request->request->get('old_pwd');
+          $newPwd = $request->request->get('new_pwd');
+          $newPwdConfirm = $request->request->get('new_pwd_confirm');
+          if ($newPwd !== $newPwdConfirm){
+            return $this->render('profile.html.twig', ['ustats' => json_decode($userStats->getContent()),
+                                                       'msg' => 'New passwords do not match.']);
+          }
+
+          if (!$encoder->isPasswordValid($user, $oldPwd)){
+              return $this->render('profile.html.twig', ['ustats' => json_decode($userStats->getContent()),
+                                                         'msg'=>'Incorrect password.']);
+          }
+
+          // all good from this point onward
+
+          $entityManager = $this->getDoctrine()->getManager();
+
+          $dbUser = $entityManager->getRepository(User::class)->findOneBy(['username' => $user->getUsername()]);
+
+
+          $dbUser->setPassword($encoder->encodePassword($dbUser, $newPwd));
+
+          $entityManager->flush();
+
+
+          return $this->render('profile.html.twig', ['ustats' => json_decode($userStats->getContent()),
+                                                     'msg'=>'Password changed successfully',
+                                                     ]);
+
+      } else {
+        if($user->getAccessLevel() === 3){
+          $this->inviteKey = $this->generateRandomString(20);
+          return $this->render('profile.html.twig', ['ustats' => json_decode($userStats->getContent()),
+                                                     'i_key' => $this->inviteKey]);
+        }else{
+          return $this->render('profile.html.twig', ['ustats' => json_decode($userStats->getContent())]);
+        }
+
+      }
+    }
+
 
     /**
      * @Route("/files", name="files")
@@ -345,25 +409,23 @@ class FrontendController extends AbstractController
     }
 
     /**
-     * @Route("/p/delete/{id}", name="delete_paste")
+     * @Route("/p/delete/all", name="delete_all_pastes")
      */
-    public function deletePaste(Request $request, $id, SessionInterface $session)
+    public function deleteAllPastes(Request $request, SessionInterface $session)
     {
       $user = $session->get('user');
       if(!$user){
-          return $this->redirectToRoute('files');
+          return $this->redirectToRoute('pastes');
       }
 
       // create internal request, use it to POST to api links
       $intReq = Request::create(
           '',
           'POST',
-          ['api_key' => $user->getApiKey(),
-           'paste_id' => $id]
+          ['api_key' => $user->getApiKey()]
       );
 
-      $paste = $this->forward('App\Controller\ApiController::deletePaste', array('request' => $intReq));
-      $paste = json_decode($paste->getContent());
+      $response = $this->forward('App\Controller\ApiController::deleteAllPastes', array('request' => $intReq));
 
       return $this->redirectToRoute('pastes');
 
