@@ -311,6 +311,61 @@ class ApiController extends AbstractController
     }
 
     /**
+     * @Route("/api/paste/update", name="api_paste_update")
+     */
+    public function updatePaste(Request $request)
+    {
+        $apiKey = $request->request->get('api_key');
+        $pasteId = $request->request->get('paste_id');
+        $uPaste = $request->request->get('u_paste');
+        $pasteName = $request->request->get('paste_name');
+        $users = $this->getDoctrine()->getRepository(User::class);
+
+        $user = $users->findOneBy(['api_key' => $apiKey]);
+
+        if (!$user) {
+            return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
+        }
+
+        if (!$uPaste) {
+            return $this->json(['success' => 'false', 'reason' => 'Paste text wasn\'t provided']);
+        }
+
+
+        $pastes = $this->getDoctrine()->getRepository(Paste::class);
+        $paste = $pastes->findOneBy(['real_id' => $pasteId]);
+
+        if (!$paste){
+            return $this->json(['success' => 'false', 'reason' => 'Paste does not exist'.$pasteId.'<br>']);
+        }
+
+        if ($user->getID() !== $paste->getCorrUid()){
+            return $this->json(['success' => 'false', 'reason' => 'Paste does not belong to user']);
+        }
+
+        if (!$pasteName) {
+            $paste->setPasteName("null");
+        }
+        else {
+            $paste->setPasteName($pasteName);
+        }
+
+        $paste->setPasteText($uPaste);
+
+
+        $entityManager = $this->getDoctrine()->getManager();
+        $entityManager->flush();
+
+        $host = $request->getSchemeAndHttpHost();
+
+        return $this->json(['success' => 'true',
+                            'api_link' => $host.'/api/p/'.$paste->getRealId(),
+                            'web_link' => $host.'/p/'.$paste->getRealId()]);
+
+    }
+
+
+    /**
      * @Route("/api/p", name="api_paste_get")
      */
     public function getPaste(Request $request) // Get paste via POST.
@@ -340,8 +395,9 @@ class ApiController extends AbstractController
      */
     public function deletePaste(Request $request) // JSON-only API paste deletion route.
     {
-        // WARNING: CONFIRM IN FRONTEND BEFORE SENDING REQUEST
+
         $apiKey = $request->request->get('api_key');
+        $pasteId = $request->request->get('paste_id');
         $users = $this->getDoctrine()->getRepository(User::class);
 
         $user = $users->findOneBy(['api_key' => $apiKey]);
@@ -372,8 +428,9 @@ class ApiController extends AbstractController
      */
     public function deleteAllPastes(Request $request) // JSON-only API paste deletion route.
     {
+        // WARNING: CONFIRM IN FRONTEND BEFORE SENDING REQUEST
         $apiKey = $request->request->get('api_key');
-        $pasteId = $request->request->get('paste_id');
+
 
         $users = $this->getDoctrine()->getRepository(User::class);
 

@@ -1,0 +1,45 @@
+{% extends "base.html.twig" %}
+{% block links %}
+			<a href="/">back</a>
+			<a href="/files/0">files</a>
+			<a href="/pastes/0">pastes</a>
+{% endblock %}
+
+{% block content %}
+
+
+
+
+	{% if app.session.get('user') %}
+		{% set acc = app.session.get('user') %}
+
+		{% if ustats.success is defined and ustats.success == 'true' %}
+		  <p class="stats">your stats:   disk usage:  {{ustats.total_filesize}}   files: {{ustats.file_count}}   pastes: {{ustats.paste_count}}</p>
+      <p class="separator"></p>
+    {% endif %}
+
+		{% if msg is defined %}
+			<p class="msg">{{ msg }}</p>
+		{% endif %}
+
+    {% if i_key is defined %}
+  		<p class="msg">current invite key: {{ i_key }}</p>
+  	{% endif %}
+
+    <p>your api key: {{ acc.apikey }}</p>
+
+    <p>reset your password:</p>
+    <form method="post">
+  		<p>old password: <input type=password name=old_pwd required></p>
+  		<p>new password: <input type=password name=new_pwd required></p>
+  		<p>confirm new password: <input type=password name=new_pwd_confirm required></p>
+  		<p><input type=submit value=reset></p>
+  	</form>
+
+  {% else %}
+    <p>not logged in.</p>
+  {% endif %}
+
+
+
+{% endblock %}

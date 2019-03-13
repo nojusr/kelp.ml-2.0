@@ -151,6 +151,11 @@ img {
   white-space: pre;
 }
 
+.pastename{
+  font-size: 1.1em;
+
+}
+
 /* ID'S */
 
 #thumbnail {

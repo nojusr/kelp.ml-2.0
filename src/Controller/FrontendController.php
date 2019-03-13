@@ -15,6 +15,7 @@ use App\Controller\ApiController;
 use App\Entity\File;
 use App\Entity\User;
 use App\Entity\Paste;
+use App\Entity\Invite;
 
 class FrontendController extends AbstractController
 {
@@ -128,6 +129,8 @@ class FrontendController extends AbstractController
         if ($request->isMethod('post')) {
             // registration
 
+            $entityManager = $this->getDoctrine()->getManager();
+
             $userName = $request->request->get('username');
             $plainPassword = $request->request->get('password');
             $inviteTest = $request->request->get('invite_key');
@@ -149,7 +152,16 @@ class FrontendController extends AbstractController
 
             // invite key checking
             // TODO: regenerate invite key upon startup, also every time somebody registers
-            if ('lolmao' !== $inviteTest){
+
+            $invite = $entityManager->getRepository(Invite::class)->find(1);
+
+            if (!$invite){
+                return $this->render('register.html.twig', ['msg' => 'Internal error; registration not yet supported.']);
+            }
+
+            $inviteKey = $invite->getInviteKey();
+
+            if ($inviteKey !== $inviteTest){
                 echo $this->inviteKey.'<br>';
                 return $this->render('register.html.twig', ['msg' => 'Invalid invite key.']);
             }
@@ -165,6 +177,8 @@ class FrontendController extends AbstractController
             }
 
             // all checks done, everything is alright
+
+            // user creation
             $newUser = new User();
 
             $newUser->setUsername($userName);
@@ -173,9 +187,11 @@ class FrontendController extends AbstractController
             $newUser->setApiKey($this->generateRandomString(20));
             $newUser->setDateAdded(new \DateTime());
 
-            $entityManager = $this->getDoctrine()->getManager();
-
             $entityManager->persist($newUser);
+
+            // change invite key
+            $invite->setInviteKey($this->generateRandomString(20));
+
             $entityManager->flush();
 
             return $this->render('register.html.twig', ['msg' => 'Successfully registered.']);
@@ -204,6 +220,8 @@ class FrontendController extends AbstractController
           ['api_key' => $user->getApiKey()]
       );
 
+      $entityManager = $this->getDoctrine()->getManager();
+
       $userStats = $this->forward('App\Controller\ApiController::fetchUser', array('request' => $intReq));
 
       if ($request->isMethod('post')) {
@@ -224,7 +242,7 @@ class FrontendController extends AbstractController
 
           // all good from this point onward
 
-          $entityManager = $this->getDoctrine()->getManager();
+
 
           $dbUser = $entityManager->getRepository(User::class)->findOneBy(['username' => $user->getUsername()]);
 
@@ -240,9 +258,24 @@ class FrontendController extends AbstractController
 
       } else {
         if($user->getAccessLevel() === 3){
-          $this->inviteKey = $this->generateRandomString(20);
+
+          $invite = $entityManager->getRepository(Invite::class)->find(1);
+
+          if (!$invite){
+            $invite = new Invite;
+            $invite->setInviteKey($this->generateRandomString(20));
+            $entityManager->persist($invite);
+
+          }else{
+            $invite->setInviteKey($this->generateRandomString(20));
+
+          }
+          $entityManager->flush();
+
+          $inviteKey = $invite->getInviteKey();
+
           return $this->render('profile.html.twig', ['ustats' => json_decode($userStats->getContent()),
-                                                     'i_key' => $this->inviteKey]);
+                                                     'i_key' => $inviteKey]);
         }else{
           return $this->render('profile.html.twig', ['ustats' => json_decode($userStats->getContent())]);
         }
@@ -250,15 +283,14 @@ class FrontendController extends AbstractController
       }
     }
 
-
     /**
-     * @Route("/files", name="files")
+     * @Route("/files/{page}", name="files")
      */
-    public function files(Request $request, SessionInterface $session)
+    public function files(Request $request, $page, SessionInterface $session)
     {
         $user = $session->get('user');
         if(!$user){
-            return $this->render('files.html.twig');
+            return $this->render('files.html.twig', ['page' => 0]);
 
         }
 
@@ -271,8 +303,34 @@ class FrontendController extends AbstractController
 
         $userStats = $this->forward('App\Controller\ApiController::fetchUser', array('request' => $intReq));
         $userFiles = $this->forward('App\Controller\ApiController::fetchUserFiles', array('request' => $intReq));
+
+        $userFiles = json_decode($userFiles->getContent());
+        // get pagelen parameter
+
+        $pageLen = $this->getParameter('number_of_items');
+
+        // basic checks
+
+
+        if ($page*$pageLen > count($userFiles->files)){
+            return $this->redirectToRoute('files', ['page' => 0]);
+        }
+
+        $pageAmount = floor(count($userFiles->files)/$pageLen);
+
+        if ($page < 0){
+            return $this->redirectToRoute('files', ['page' => $pageAmount]);
+        }
+
+        // select page specific files
+        if (count($userFiles->files) > $pageLen){
+            $userFiles->files = array_slice($userFiles->files, $pageLen*$page, $pageLen);
+        }
+
         return $this->render('files.html.twig', ['ustats' => json_decode($userStats->getContent()),
-                                                 'ufiles' => json_decode($userFiles->getContent())]);
+                                                 'ufiles' => $userFiles,
+                                                 'page' => $page,
+                                                 'page_amount' => $pageAmount]);
     }
 
     /**
@@ -282,7 +340,7 @@ class FrontendController extends AbstractController
     {
         $user = $session->get('user');
         if(!$user){
-            return $this->redirectToRoute('files');
+            return $this->redirectToRoute('files', ['page' => 0]);
         }
 
         // create internal request, use it to POST to api links
@@ -292,7 +350,8 @@ class FrontendController extends AbstractController
             ['api_key' => $user->getApiKey()]
         );
         $response = $this->forward('App\Controller\ApiController::deleteAllUploads', array('request' => $intReq));
-        return $this->redirectToRoute('files');
+        $referer = $request->headers->get('referer');
+        return $this->redirect($referer);
 
 
     }
@@ -304,7 +363,7 @@ class FrontendController extends AbstractController
     {
         $user = $session->get('user');
         if(!$user){
-            return $this->redirectToRoute('files');
+            return $this->redirectToRoute('files', ['page' => 0]);
         }
 
         // create internal request, use it to POST to api links
@@ -317,7 +376,8 @@ class FrontendController extends AbstractController
 
         $response = $this->forward('App\Controller\ApiController::deleteUpload', array('request' => $intReq));
 
-        return $this->redirectToRoute('files');
+        $referer = $request->headers->get('referer');
+        return $this->redirect($referer);
 
     }
 
@@ -385,13 +445,13 @@ class FrontendController extends AbstractController
     }
 
     /**
-     * @Route("/pastes", name="pastes")
+     * @Route("/pastes/{page}", name="pastes")
      */
-    public function showPastes(Request $request, SessionInterface $session)
+    public function showPastes(Request $request, $page, SessionInterface $session)
     {
         $user = $session->get('user');
         if(!$user){
-            return $this->render('pastes.html.twig');
+            return $this->render('pastes.html.twig', ['page' => 0]);
 
         }
 
@@ -404,8 +464,30 @@ class FrontendController extends AbstractController
 
         $userStats = $this->forward('App\Controller\ApiController::fetchUser', array('request' => $intReq));
         $userPastes = $this->forward('App\Controller\ApiController::fetchUserPastes', array('request' => $intReq));
+
+        $userPastes = json_decode($userPastes->getContent());
+
+        $pageLen = $this->getParameter('number_of_items');
+
+        if ($page*$pageLen > count($userPastes->pastes)){
+            return $this->redirectToRoute('pastes', ['page' => 0]);
+        }
+
+        $pageAmount = floor(count($userPastes->pastes)/$pageLen);
+
+        if ($page < 0){
+            return $this->redirectToRoute('pastes', ['page' => $pageAmount]);
+        }
+
+        // select page specific files
+        if (count($userPastes->pastes) > $pageLen){
+            $userPastes->pastes = array_slice($userPastes->pastes, $pageLen*$page, $pageLen);
+        }
+
         return $this->render('pastes.html.twig', ['ustats' => json_decode($userStats->getContent()),
-                                                 'upastes' => json_decode($userPastes->getContent())]);
+                                                  'upastes' => $userPastes,
+                                                  'page' => $page,
+                                                  'page_amount' => $pageAmount]);
     }
 
     /**
@@ -415,7 +497,7 @@ class FrontendController extends AbstractController
     {
       $user = $session->get('user');
       if(!$user){
-          return $this->redirectToRoute('pastes');
+          return $this->redirectToRoute('pastes', ['page' => 0]);
       }
 
       // create internal request, use it to POST to api links
@@ -427,7 +509,89 @@ class FrontendController extends AbstractController
 
       $response = $this->forward('App\Controller\ApiController::deleteAllPastes', array('request' => $intReq));
 
-      return $this->redirectToRoute('pastes');
+      $referer = $request->headers->get('referer');
+      return $this->redirect($referer);
+
+    }
+
+    /**
+     * @Route("/p/delete/{id}", name="delete_paste")
+     */
+    public function deletePaste(Request $request, SessionInterface $session, $id)
+    {
+      $user = $session->get('user');
+      if(!$user){
+          return $this->redirectToRoute('pastes', ['page' => 0]);
+      }
+
+      // create internal request, use it to POST to api links
+      $intReq = Request::create(
+          '',
+          'POST',
+          ['api_key' => $user->getApiKey(),
+           'paste_id' => $id]
+      );
+
+
+
+      $response = $this->forward('App\Controller\ApiController::deletePaste', array('request' => $intReq));
+
+      $referer = $request->headers->get('referer');
+      return $this->redirect($referer);
+
+    }
+
+    /**
+     * @Route("/p/edit/{id}", name="edit_paste")
+     */
+    public function editPaste(Request $request, SessionInterface $session, $id)
+    {
+      $user = $session->get('user');
+      if(!$user){
+          return $this->redirectToRoute('pastes', ['page' => 0]);
+      }
+
+      $pastes = $this->getDoctrine()->getRepository(Paste::class);
+      $paste = $pastes->findOneBy(['real_id' => $id]);
+
+      if (!$paste){
+          return $this->render('create_paste.html.twig', ['msg' => 'Paste not found.']);
+      }
+
+      if ($user->getID() !== $paste->getCorrUid()){
+          return $this->render('create_paste.html.twig', ['msg' => 'Paste does not belong to user.']);
+      }
+
+      echo 'id:'.$id.'<br>';
+
+      // create internal request, use it to POST to api links
+
+      if ($request->isMethod('post')) {
+          $request->request->set('paste_id', $id);
+
+          $response = $this->forward('App\Controller\ApiController::updatePaste');
+          $json = json_decode($response->getContent());
+
+          if ($json->success === 'true'){
+              return $this->redirect($json->web_link);
+          }else{
+              return $this->render('edit_paste.html.twig', ['msg' => $json->reason]);
+          }
+
+
+
+      }else{
+          $intReq = Request::create(
+              '',
+              'POST',
+              ['api_key' => $user->getApiKey(),
+               'paste_id' => $id]
+          );
+
+          $response = $this->forward('App\Controller\ApiController::getPaste', array('request' => $intReq));
+          $paste = json_decode($response->getContent());
+          return $this->render('edit_paste.html.twig', ['paste' => $paste]);
+      }
 
     }
 

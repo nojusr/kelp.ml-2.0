@@ -1,0 +1,23 @@
+{% extends "base_wide.html.twig" %}
+{% block links %}
+	<a href="/">back</a>
+	<a href="/pastes/0">pastes</a>
+{% endblock %}
+{% block content %}
+	{% if msg is defined %}
+		<p class="msg">{{ msg }}</p>
+	{% endif %}
+	<form method=post id="pasteform" enctype="multipart/form-data">
+  	{% if app.session.get('user') %}
+  		{% set acc = app.session.get('user') %}
+  		<p>api key: <input type=text name=api_key value={{ acc.apikey }} required></p>
+  	{% else %}
+  		<p>api key: <input type=text name=api_key required></p>
+  	{% endif %}
+    {% if paste.paste_name is defined and paste.paste_text is defined %}
+  	   <p style="white-space: pre;">paste name: <input type = "text" name="paste_name" value={{paste.paste_name}} />   <input type=submit value=update /></p>
+  	   <textarea autofocus required spellcheck="false" form="pasteform" class="paste" name="u_paste">{{paste.paste_text}}</textarea>
+    {% endif %}
+	</form>
+
+{% endblock %}

@@ -13,11 +13,11 @@
 	{% if app.request.hasPreviousSession %}
 		{% if app.session.get('user') %}
 			{% set acc = app.session.get('user') %}
-			<p class="greeting">welcome, {{ acc.username }}.   <a href="/files">files</a>   <a href="/pastes">pastes</a>   <a href="/profile">profile</a></p>
+			<p class="greeting">welcome, {{ acc.username }}.   <a href="/files/0">files</a>   <a href="/pastes/0">pastes</a>   <a href="/profile">profile</a></p>
 			<p class="separator"></p>
 		{% endif %}
 	{% endif %}
-	<p>Welcome to my website. I am a programmer from Lithuania, with interests in graphic design, engineering, and video games. This website also serves as an image hosting site, but since i'm a little short on storage space, you will have to contact me for registration.</p>
-	<p> email: <a href="mailto:nojusr@gmail.com?subject=contakt lil ol kelp">nojusr@gmail.com</a></p>
+	<p>Welcome to my file/paste hosting site. This place is invite only. Contact me for registration below.</p>
+	<p> email: <a href="mailto:nojusr@gmail.com?subject=I wanna register to kelp.ml">nojusr@gmail.com</a></p>
 	<p>github: <a href="https://github.com/nojusr">https://github.com/nojusr</a></p>
 {% endblock %}

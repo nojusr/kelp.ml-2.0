@@ -1,14 +1,16 @@
 {% extends "base_wide.html.twig" %}
 {% block links %}
 	<a href="/">home</a>
-	{% if paste.paste_name is defined %}
-		<p>paste name: {{ paste.paste_name }}</p>
-	{% endif %}
+	<a href="/paste">paste</a>
+
 {% endblock %}
 {% block content %}
+	{% if paste.paste_name is defined and paste.paste_name != 'null' %}
+		<p class="pastename">{{ paste.paste_name }}</p>
+	{% endif %}
 	{% if paste.paste_text is defined %}
-	<pre class="paste"> {{ paste.paste_text }}</pre>
+	<pre class="paste">{{ paste.paste_text }}</pre>
 	{% else %}
 	<p>paste not found</p>
-	{% endif %} 
+	{% endif %}
 {% endblock %}

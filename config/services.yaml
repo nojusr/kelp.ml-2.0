@@ -4,17 +4,15 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
-    # invite_key
-    invite_key: 
 
-    # domain
+    # domain (not used)
     domain: 'http://127.0.0.1:8000'
     # upload dir
     upload_directory: '%kernel.project_dir%/public/u'
-    # how many items to display in /files
-    number_of_items: 29
+    # how many items to display in /files and /pastes
+    number_of_items: 27
     # allowed filetypes (single comma seperated string, no spaces, remove exe and dll if running on windows)
-    allowed_filetypes: >- 
+    allowed_filetypes: >-
      application/vnd.android.package-archive,
      application/pdf,
      font/ttf,

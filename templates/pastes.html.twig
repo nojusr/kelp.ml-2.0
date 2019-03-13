@@ -1,12 +1,8 @@
 {% extends "base.html.twig" %}
 {% block links %}
 			<a href="/">back</a>
-			<a href="/upload">uploads</a>
-			{% if session['username'] is defined %}
-				<a href="/logout">logout</a>
-			{% else %}
-				<a href="/pastes">pastes</a>
-			{% endif %}
+			<a href="/paste">paste</a>
+			<a href="/files/0">files</a>
 {% endblock %}
 
 {% block content %}
@@ -22,43 +18,38 @@
 		{% endif %}
 		<p class="separator"></p>
 
-			{% if curr_page is defined and page_amount > 0 %}
-				{% if curr_page > 1 %}
-					<a href="{{curr_page-1}}">&lt&lt </a>
-				{% else %}
-					&lt&lt
-				{% endif %}
+		{% if page is defined and page_amount > 0 %}
+			<a href="{{page-1}}">&lt&lt </a>
 
-				{% for page in range (0, page_amount+1) %}
-					{%if page+1 == curr_page %}
-						{{page+1}}
-					{% else %}
-						<a href="{{page+1}}">{{page+1}}</a>
-					{% endif %}
-				{% endfor %}
-
-				{% if curr_page <= page_amount %}
-					<a href="{{curr_page+1}}"> &gt&gt</a>
+			{% for pnum in 0..page_amount %}
+				{% if pnum == page %}
+					{{pnum+1}}
 				{% else %}
-					&gt&gt
+					<a href="{{pnum}}"> {{pnum+1}} </a>
 				{% endif %}
-			{% endif %}
+			{% endfor %}
+			<a href="{{page+1}}"> &gt&gt</a>
+
+		{% endif %}
+
 		</p>
 		{% if upastes.pastes|length > 0 %}
 			<p>here are your pastes, {{acc.username}}.</p>
-			<a href="/files/delete/all" onclick="return confirm('Do you REALLY want to delete all of your pastes?')">delete all pastes (cannot be undone!)</a>
+			<a href="/p/delete/all" onclick="return confirm('Do you REALLY want to delete all of your pastes?')">delete all pastes (cannot be undone!)</a>
 			<table class="files">
 				<thead>
 					<th>paste id</th>
 					<th>paste title</th>
           <th></th>
+					<th></th>
 				</thead>
 
 					{% for paste in upastes.pastes %}
 						<tr>
               <td>{{paste.id}}</td>
-							<td class="filename"><a class="link" href="/p/{{paste.id}}"><span title="{{paste.paste_name}}}">{{paste.paste_name}}</span></a></td>
-              <td><a href="/p/delete/{{paste.id}}">delete</a></td>
+							<td class="filename"><a class="link" href="/p/{{paste.id}}"><span title="{{paste.paste_name}}">{{paste.paste_name}}</span></a></td>
+							<td><a href="/p/edit/{{paste.id}}">edit</a></td>
+							<td><a href="/p/delete/{{paste.id}}">delete</a></td>
             </tr>
 					{% endfor %}
 			</table>
@@ -88,7 +79,7 @@
 		$('.link').mouseover(function() {
       var last_part=this.href.substr(this.href.lastIndexOf('/') + 1);
 
-      $.get( 'p/raw/'+last_part)
+      $.get( '/p/raw/'+last_part)
       .done(function( data ) {
         txt.text(data);
         txt.css('padding', '2px');
@@ -99,7 +90,10 @@
 			txt.text("");
       txt.css('padding', '0px');
 		});
-
+		$('.filename').mouseleave(function() {
+			txt.text("");
+      txt.css('padding', '0px');
+		});
 
 	</script>
 
