@@ -630,26 +630,5 @@ class ApiController extends AbstractController
 
     }
  
-    // API DEFINTION:
-    // all links that are designed to return JSON, and are designed to interface with various programs
-    // begin with /api/
-    //
-    // all links that serve publicly accessibale data are prefixed with /api/get
-    // all links that serve private data OR do private functions are prefixed with /api/get
-    //
-    // POST LINKS:
-    // post file: /api/upload
-    // post paste: /api/paste
-    // get file: /u/file.extension
-    // get paste (in a nice format): /p/PASTEID
-    // get paste (in raw format): /p/raw/PASTEID
-    // get paste (in JSON): /api/p
-    // doing pastes....
-    // uploading seems p simple, but how should i implement paste recieving?
-    // should i do two different routes?
-    // /fetch/user -- get user data (in JSON), show amount of files uploaded, total filesize, time joined.
-    // /fetch/user/files -- get all files of user
-    // /fetch/user/pastes -- get all pastes of user
-    // /fetch/stats -- get global website stats (amount of users, total amount of files, that kind of thing)
 }
 ?>
