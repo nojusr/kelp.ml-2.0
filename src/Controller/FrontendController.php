@@ -51,7 +51,7 @@ class FrontendController extends AbstractController
 
         if ($request->isMethod('post')) {
             $response = $this->forward('App\Controller\ApiController::upload');
-            $json = json_decode($response->getContent());
+        $json = json_decode($response->getContent());
 
             if ($json->success === 'true'){
                 return $this->render('upload.html.twig', ['stats'=>$statData, 'link'=>$json->link]);
@@ -562,7 +562,6 @@ class FrontendController extends AbstractController
           return $this->render('create_paste.html.twig', ['msg' => 'Paste does not belong to user.']);
       }
 
-      echo 'id:'.$id.'<br>';
 
       // create internal request, use it to POST to api links
 

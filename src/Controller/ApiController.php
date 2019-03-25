@@ -8,6 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use App\Entity\File;
 use App\Entity\User;
 use App\Entity\Paste;
@@ -74,13 +75,8 @@ class ApiController extends AbstractController
         if (!$user) {
             return $this->json(['success' => 'false', 'reason' => 'No matching API key found']);
         }
-
+        
         $fileSize = $uFile->getClientSize();
-
-        if (!$fileSize) {
-            return $this->json(['success' => 'false', 'reason' => 'Uploaded file is empty']);
-        }
-
 
         $fileName = explode('.', $uFile->getClientOriginalName());
         $realName = $fileName[0];
@@ -559,7 +555,7 @@ class ApiController extends AbstractController
         $files = $this->getDoctrine()->getRepository(File::class);
 
         $userFiles = $files->findBy(['corr_uid' => $user->getID()]);
-
+        $userFiles = array_reverse($userFiles);
         $outputInfo = array();
 
         foreach ($userFiles as $file){
@@ -593,7 +589,7 @@ class ApiController extends AbstractController
         $pastes = $this->getDoctrine()->getRepository(Paste::class);
 
         $userPastes = $pastes->findBy(['corr_uid' => $user->getID()]);
-
+        $userPastes = array_reverse($userPastes);
         $outputInfo = array();
 
         foreach ($userPastes as $paste){
@@ -608,6 +604,32 @@ class ApiController extends AbstractController
                             'pastes' => $outputInfo]);
 
     }
+
+    /**
+     * @Route("/api/login", name="api_login")
+     */
+    public function login(Request $request, UserPasswordEncoderInterface $encoder) // auth user and return api key.
+    {
+        $userName = $request->request->get('username');
+        $passWord = $request->request->get('password');
+
+        $users = $this->getDoctrine()->getRepository(User::class);
+
+        $user = $users->findOneBy(['username' => $userName]);
+
+        if (!$user) {
+            return $this->json(['success' => 'false', 'reason' => 'No user found.']);
+        }
+
+        if (!$encoder->isPasswordValid($user, $passWord)){
+            return $this->json(['success' => 'false', 'reason' => 'Incorrect password.']);
+        }
+
+        return $this->json(['success' => 'true',
+                            'api_key' => $user->getApiKey()]);
+
+    }
+ 
     // API DEFINTION:
     // all links that are designed to return JSON, and are designed to interface with various programs
     // begin with /api/
