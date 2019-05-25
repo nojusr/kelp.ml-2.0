@@ -1,174 +1,347 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta name="description" content="kelp's website">
-		<title>kelp's place</title>
-		<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='admin.css') }}">
-		<meta name="theme-color" content="#000000">
-		
-	</head>
-	<body>
-		<div class="wrapper">
-			<pre class="title">
-      ___           ___           ___       ___     
-     /\__\         /\  \         /\__\     /\  \    
-    /:/  /        /::\  \       /:/  /    /::\  \   
-   /:/__/        /:/\:\  \     /:/  /    /:/\:\  \  
-  /::\__\____   /::\~\:\  \   /:/  /    /::\~\:\  \ 
- /:/\:::::\__\ /:/\:\ \:\__\ /:/__/    /:/\:\ \:\__\
- \/_|:|~~|~    \:\~\:\ \/__/ \:\  \    \/__\:\/:/  /
-    |:|  |      \:\ \:\__\    \:\  \        \::/  / 
-    |:|  |       \:\ \/__/     \:\  \        \/__/  
-    |:|  |        \:\__\        \:\__\              
-     \|__|         \/__/         \/__/              
-			</pre>
-			<p class="separator">---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------</p>
-			<div class="links">
-				<a href="/">back</a>
-				<a href="/upload">upload</a>
-			</div>
-			<p class="separator">---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------</p>
-			<form action="{{ url_for('admin') }}">
-				{% if searchdata is defined %}
-				 <div class="actions">
-					    <p>search: 
-					    <input type=text name=search_query {% if searchdata[1] != -1 %}value={{ searchdata[1] }}{% endif %} >
-					    </p> 
-					    
-					    <p>search by: 
-					    <select name=search_by>
-						<option value="4"{% if searchdata[0] == 4 %} selected {% endif %}>filename</option>
-						<option value="2"{% if searchdata[0] == 2 %} selected {% endif %}>filetype</option>
-						<option value="0"{% if searchdata[0] == 0 %} selected {% endif %}>id</option>
-						<option value="1"{% if searchdata[0] == 1 %} selected {% endif %}>user id</option>
-					    </select>
-					    </p>
-					    <p>order by:
-					    <select name=order_by>
-						<option value="4"{% if searchdata[2] == 4 %} selected {% endif %}>filename</option>
-						<option value="2"{% if searchdata[2] == 2 %} selected {% endif %} >filetype</option>
-						<option value="0"{% if searchdata[2] == 0 %} selected {% endif %}>id</option>
-						<option value="1"{% if searchdata[2] == 1 %} selected {% endif %} >user id</option>
-					    </select>
-					    </p>  
-					    <select name=desc_asc>
-						<option value="desc"{% if searchdata[3] == 'desc' %} selected {% endif %} >descending</option>
-						<option value="asc"{% if searchdata[3] == 'asc' %} selected {% endif %}>ascending</option>
-					    </select>
-					    <input type=submit value="filter">
-				 </div>
-				 {% else %}
-				 <div class="actions">
-					    <p>search: 
-					    <input type=text name=search_query>
-					    </p> 
-					    
-					    <p>search by: 
-					    <select name=search_by>
-						<option value="4">filename</option>
-						<option value="2">filetype</option>
-						<option value="0">id</option>
-						<option value="1">user id</option>
-					    </select>
-					    </p>
-					    <p>order by:
-					    <select name=order_by>
-						<option value="4">filename</option>
-						<option value="2">filetype</option>
-						<option value="0">id</option>
-						<option value="1">user id</option>
-					    </select>  
-					    </p>
-					    <select name=desc_asc>
-						<option value="desc">descending</option>
-						<option value="asc">ascending</option>
-					    </select>
-					    <input type=submit value="filter">
-				 </div>		 
-				 {% endif %}
-			</form>
-			
-			<p class="pages">
-				{% if pagedata[1] is defined and pagedata[0] > 0 %}
-					{% if pagedata[1] > 1 %}
-						<a href="{{pagedata[1]-1}}?{{args}}">&lt&lt </a>
-					{% else %}
-						&lt&lt
-					{% endif %}
-					
-					{% for page in range (0, pagedata[0]+1) %}
-						{%if page+1 == pagedata[1] %}
-							{{page+1}}
-						{% else %}
-							<a href="{{page+1}}?{{args}}">{{page+1}}</a>
-						{% endif %}
-					{% endfor %}
-					
-					{% if pagedata[1] <= pagedata[0] %}
-						<a href="{{pagedata[1]+1}}?{{args}}"> &gt&gt</a>
-					{% else %}
-						&gt&gt
-					{% endif %}
-				{% endif %}	
-			</p>
-			
-			{% if files is defined %}
-				<table class="files">
+{% extends "base_wide.html.twig" %}
+{% block links %}
+	<a href="/">back</a>
+	<a href="/profile">profile</a>
+{% endblock %}
+{% block content %}
+	{% if msg is defined %}
+		<p class="msg">{{ msg }}</p>
+	{% endif %}
+	{% if users is defined %}
+
+
+
+		<p>Global website stats: <span id="stats"> </span></p>
+		<p>View user:
+			<select id = "users">
+					<option selected value="nil">select an user</option>
+				{% for user in users%}
+					<option value="{{user.apikey}}" >{{ user.username }}</option>
+				{% endfor %}
+			</select>
+		</p>
+
+		<p class="user_stats">User stats:</p>
+
+
+		<div class="multi_table" style="display: flex; justify-content: center;">
+			<div class="file_holder">
+				<p class="file_pages">
+					<a href="#" class="last_file_page">&lt&lt</a><a href="#" class="next_file_page">&gt&gt</a>
+				</p>
+				<table class="files" id="filetable" style="width: 40vw;">
 					<thead>
-						<th>id</th>
-						<th>uploader</th>
-						<th>url</th>
+						<th>file id</th>
 						<th>filename</th>
 						<th>filetype</th>
 						<th></th>
 					</thead>
-					{% for file in files %}
-						<tr>
-							<td>{{file[0]}}</td>
-							<td>{{file[1]}} ({{file[7]}})</td>
-							<td>{{file[3]}}</td>
-							{% if file[4] is none %} 
-								{#backwards compatibility#}
-								<td class="filename"><a class="link" href="/{{file[3]}}.{{file[2]}}"><span title="{{file[3]}}">{{file[3]}}</span></a></td>
-							{% else %}
-								<td class="filename"><a class="link" href="/{{file[3]}}.{{file[2]}}"><span title="{{file[4]}}">{{file[4]}}</span></a></td>
-							{% endif %}
-							
-							<td>{{file[2]}}</td>
-							<td><a href="/delete/{{file[3]}}.{{file[2]}}">delete</a></td>
-						</tr>
-					{% endfor %}
 				</table>
-			{% else %}
-				<p>This website be empty, dawg</p>
-			{% endif %}
-			
-			<img src="" id="thumbnail">
-			<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-			<script>
-				function checkURL(url) {
-					return(url.match(/\.(jpeg|jpg|gif|png|tiff)$/) != null);
-				}
-				
-				var $thumb = $("#thumbnail"); 
-				$(document).mousemove(function(e) { 
-					$thumb.offset({ top: e.pageY+10, left: e.pageX+10 }); 
-				});
-				
-				$('.link').mouseover(function() {
-					if (checkURL(this.href)){
-						$("#thumbnail").attr("src",this.href);
-					}
-				});
-				$('.link').mouseleave(function() {
-					$("#thumbnail").attr("src", "");
-				});
-			</script>
-		
+			</div>
+
+			<div class="paste_holder">
+				<p class="paste_pages">
+					<a href="#" class="last_paste_page">&lt&lt</a><a href="#" class="next_paste_page">&gt&gt</a>
+				</p>
+				<table class="files", id="pastetable" style="width: 40vw;">
+					<thead>
+						<th>paste id</th>
+						<th>paste title</th>
+	          <th></th>
+						<th></th>
+					</thead>
+				</table>
+			</div>
+
+
 		</div>
-	</body>
+
+	  <div id="pastehover" style="background-color: var(--bg); border: 1px solid var(--fg-shade); white-space: pre; overflow: hidden; position: absolute; overflow-x: hidden;"></div>
+		<img src="" id="thumbnail" style="overflow: hidden; position: absolute; overflow-x: hidden;"></div>
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+		<script>
 
 
-	
-</html>
+			// global vars
+			var itemcount = 27;//items per page
+			var filepage = 0;
+			var pastepage = 0;
 
+			var filelist;
+			var pastelist;
+
+			$.ajax({
+					url: "./api/fetch/stats",
+					processData: false,
+					contentType: false,
+					type:'get',
+					success: function(result){
+							$("#stats").text('pastes: '+result.paste_count+', files: '+result.file_count+', data used: '+result.total_filesize);
+					}
+			});
+
+			// main user select listener
+			$('#users').change(function() {
+				var apikey = $(this).val();
+
+				//begin mass requests lol
+				var apikeyform = new FormData();
+				apikeyform.append('api_key', apikey);
+
+				$.ajax({
+						url: "./api/fetch/user",
+						processData: false,
+						contentType: false,
+						type:'post',
+						data: apikeyform,
+						success: function(result){
+								$(".user_stats").text('User stats: pastes: '+result.paste_count+', files: '+result.file_count+', data used: '+result.total_filesize);
+						}
+				});
+
+				loadfiles(apikeyform);
+				loadpastes(apikeyform);
+
+
+			});
+
+			//PASTE RELATED FUNCTIONS
+			function loadpastes(apikeyform){
+				$.ajax({
+						url: "./api/fetch/pastes",
+						processData: false,
+						contentType: false,
+						type:'post',
+						data: apikeyform,
+						success: function(result){
+
+							pastelist = result.pastes;
+
+							drawpastepagenumbers();
+							pastepage = 0;
+							loadpastepage(pastepage);
+						}
+				});
+			}
+
+			function loadpastepage(page){
+				$("#pastetable > tr").remove();
+
+				var paste_selected = pastelist.slice(itemcount*page, (itemcount*page)+itemcount);
+
+				var outstring = "";
+				$.each(paste_selected, function(i, item){
+					outstring += '<tr><td>'+item.id+'</td>';
+					outstring += '<td><a class=\"linkP\" href=\"/p/'+item.id+'\">'+item.paste_name+'</td>';
+					outstring += '<td><a href=\"#\">edit</a></td>';
+					outstring += '<td><a href=\"#\">delete</a></td></tr>';
+				});
+				$('#pastetable > thead').after(outstring);
+			}
+
+			function drawpastepagenumbers(){
+				var pastepagecount = getpagecount(pastelist);
+				$(".paste_pages > .ppage").remove();
+				for (var i = 0; i <= pastepagecount; i++){
+					if (i == pastepage){
+						outstring = '<span class=\"ppage\">'+(i+1)+'</span>';
+					}else{
+						outstring = '<a href=\"#\" class=\"ppage\">'+(i+1)+'</a>';
+					}
+
+					$(".paste_pages > .next_paste_page").before(outstring);
+				}
+
+			}
+
+			$(document).on("click", '.ppage', function(e) {
+				var page = $(this).text();
+				pastepage = page-1;
+
+				drawpastepagenumbers();
+				loadpastepage(pastepage);
+
+			});
+
+			$('.next_paste_page').click(function(){
+					pastepage += 1;
+					if (pastepage > getpagecount(pastelist)){
+						pastepage = 0;
+					}
+
+					drawpastepagenumbers();
+					loadpastepage(pastepage);
+
+			});
+
+			$('.last_file_page').click(function(){
+					pastepage -= 1;
+					if (filepage < 0){
+						pastepage = getpagecount(pastelist);
+					}
+
+					drawpastepagenumbers();
+					loadpastepage(pastepage);
+
+			});
+			//PASTE HOVER FUNCTIONS
+			var txt = $('#pastehover');
+			$(document).mousemove(function(e) {
+				var pasteheight = $('#pastehover').outerHeight()+10;
+				var dist = Math.floor($(window).height()-e.pageY);
+				if (dist < pasteheight+20){
+					txt.offset({ top: $(window).height()+$(window).scrollTop()-pasteheight-10, left: e.pageX+10 });
+				}else{
+					txt.offset({ top: e.pageY+10, left: e.pageX+10 });
+				}
+			});
+
+			$(document).on( "mouseover", ".linkP", function() {
+				var last_part=this.href.substr(this.href.lastIndexOf('/') + 1);
+
+				$.get( '/p/raw/'+last_part)
+				.done(function( data ) {
+					txt.text(data);
+					txt.css('padding', '2px');
+				});
+
+			});
+			$(document).on( "mouseleave", ".linkP",function() {
+				txt.text("");
+				txt.css('padding', '0px');
+			});
+			$('.paste_holder').mouseleave(function() {
+				txt.text("");
+				txt.css('padding', '0px');
+			});
+
+			//FILE HOVER FUNCTIONS
+			var thumb = $('#thumbnail');
+			$(document).mousemove(function(e) {
+				var imgheight = $('#thumbnail').outerHeight()+10;
+				var dist = Math.floor($(window).height()-e.pageY);
+				if (dist < imgheight+20){
+					thumb.offset({ top: $(window).height()+$(window).scrollTop()-imgheight-10, left: e.pageX+10 });
+				}else{
+					thumb.offset({ top: e.pageY+10, left: e.pageX+10 });
+				}
+			});
+
+			$(document).on( "mouseover",'.linkf', function(e) {
+				if (checkURL(this.href)){
+
+					$('#thumbnail').attr("src",this.href);
+				}
+			});
+
+			$(document).on("mouseleave", '.linkf', function(e) {
+				$('#thumbnail').attr("src", "");
+			});
+
+			// used in file hover
+			function checkURL(url) {
+				return(url.match(/\.(jpeg|jpg|gif|png|tiff)$/) != null);
+			}
+
+
+			// FILE RELATED FUNCTIONS
+			function loadfiles(apikeyform){
+				$.ajax({
+						url: "./api/fetch/files",
+						processData: false,
+						contentType: false,
+						type:'post',
+						data: apikeyform,
+						success: function(result){
+
+							filelist = result.files;
+							console.log(getpagecount(filelist));
+
+							drawfilepagenumbers();
+							filapage = 0;
+							loadfilepage(filepage);
+						}
+				});
+			}
+
+			$(document).on("click", '.fpage', function(e) {
+				var page = $(this).text();
+				filepage = page-1;
+
+				drawfilepagenumbers();
+				loadfilepage(filepage);
+
+			});
+
+			$('.next_file_page').click(function(){
+					filepage += 1;
+					if (filepage > getpagecount(filelist)){
+						filepage = 0;
+					}
+
+					drawfilepagenumbers();
+					loadfilepage(filepage);
+
+			});
+
+			$('.last_file_page').click(function(){
+					filepage -= 1;
+					if (filepage < 0){
+						filepage = getpagecount(filelist);
+					}
+
+					drawfilepagenumbers();
+					loadfilepage(filepage);
+
+			});
+
+			function getpagecount(list){
+				return Math.floor(list.length/itemcount);
+			}
+
+			function drawfilepagenumbers(){
+				var filepagecount = getpagecount(filelist);
+				$(".file_pages > .fpage").remove();
+				for (var i = 0; i <= filepagecount; i++){
+					if (i == filepage){
+						outstring = '<span class=\"fpage\">'+(i+1)+'</span>';
+					}else{
+						outstring = '<a href=\"#\" class=\"fpage\">'+(i+1)+'</a>';
+					}
+
+					$(".file_pages > .next_file_page").before(outstring);
+				}
+
+			}
+
+			function loadfilepage(page){
+				$("#filetable > tr").remove();
+
+				var files_selected = filelist.slice(itemcount*page, (itemcount*page)+itemcount);
+
+				var outstring = "";
+				$.each(files_selected, function(i, item){
+					outstring += '<tr><td>'+item.filename+'</td>';
+					outstring += '<td class=\"filename\"><a class=\"linkf\" href=\"/u/';
+					outstring += item.filename+'.'+item.filetype+'\">';
+					outstring += '<span title=\"'+item.org_filename+'\">'+item.org_filename+"</span></a></td>";
+					outstring += '<td>'+item.filetype+'</td>';
+					outstring += '<td><a href=\"#\">delete</a></td></tr>';
+				});
+				$('#filetable > thead').after(outstring);
+
+			}
+
+		</script>
+
+
+		<script>
+			//PASTE MOUSEOVER SCRIPT
+
+
+		</script>
+
+	{% endif %}
+
+{% endblock %}
