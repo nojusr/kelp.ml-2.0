@@ -13,20 +13,37 @@ parameters:
     number_of_items: 27
     # allowed filetypes (single comma seperated string, no spaces, remove exe and dll if running on windows)
     allowed_filetypes: >-
+     application/x-photoshop,
+     application/psd,
+     application/photoshop,
      application/vnd.android.package-archive,
      application/pdf,
+     application/octet-stream,
+     application/java-archive,
      font/ttf,
      font/otf,
      font/woff,
      font/woff2,
+     font/sfnt,
      image/png,
+     image/vnd.adobe.photoshop,
+     image/psd,
      image/jpg,
      image/jpeg,
      image/tiff,
      image/gif,
+     image/svg,
+     image/svg+xml,
      text/plain,
+     application/x-font-ttf,
+     application/font-otf,
+     application/otf,
+     application/font,
+     applicatoin/vnd.ms-opentype,
+     application/epub+zip,
      application/vnd.ms-powerpoint,
      application/x-dosexec,
+     application/vnd.openxmlformats-officedocument.presentationml.presentation,
      application/vnd.openxmlformats-officedocument.presentationml.presentation,
      application/vnd.oasis.opendocument.text,
      application/vnd.oasis.opendocument.presentation,
@@ -40,12 +57,16 @@ parameters:
      application/x-xz,
      application/x-7z-compressed,
      application/zip,
+     audio/x-flac,
      audio/opus,
      audio/webm,
      audio/flac,
      audio/mpeg,
      video/webm,
-     video/mp4
+     video/mp4,
+     video/x-matroska,
+     video/quicktime
+
 
 services:
     # default configuration for services in *this* file

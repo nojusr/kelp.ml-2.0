@@ -12,6 +12,7 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use App\Entity\File;
 use App\Entity\User;
 use App\Entity\Paste;
+use Imagick;
 
 class ApiController extends AbstractController
 {
@@ -138,13 +139,33 @@ class ApiController extends AbstractController
                 // saving
                 $finalName = $fileId.'.'.$dbFile->getFiletype();
                 $uFile->move($this->getParameter('upload_directory'), $finalName);
+                
+                
+                // strip metadata from various files
+                if ($fileMime == ' image/jpg' || $fileMime == ' image/jpeg') {
+                    try {
+                        $tmpImg = new Imagick($this->getParameter('upload_directory').'/'.$finalName);
+                        $tmpImg->stripImage();
+                        $tmpImg->writeImage($this->getParameter('upload_directory').'/'.$finalName);
+                        $tmpImg->clear();
+                        $tmpImg->destroy();
+                    } catch (Exception $e) {
+                        return $this->json ([
+                            'success' => 'false',
+                            'error' => 'failed to strip exif off of image',
+                        ]);
+                    }
+                }
+
                 $host = $request->getSchemeAndHttpHost();
                 // json output
-                return $this->json(['success' => 'true',
-                                    'filesize' => $this->human_filesize($fileSize),
-                                    'file_id' => $fileId,
-                                    'filename' => $finalName,
-                                    'link' => $host.'/u/'.$finalName]);
+                return $this->json ([
+                    'success' => 'true',
+                    'filesize' => $this->human_filesize($fileSize),
+                    'file_id' => $fileId,
+                    'filename' => $finalName,
+                    'link' => $host.'/u/'.$finalName
+                ]);
         }
 
         return $this->json(['success' => 'false', 'reason' => 'Unsupported or unallowed filetype']);

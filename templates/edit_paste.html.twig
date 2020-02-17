@@ -15,7 +15,7 @@
   		<p>api key: <input type=text name=api_key required></p>
   	{% endif %}
     {% if paste.paste_name is defined and paste.paste_text is defined %}
-  	   <p style="white-space: pre;">paste name: <input type = "text" name="paste_name" value={{paste.paste_name}} />   <input type=submit value=update /></p>
+  	   <p style="white-space: pre;">paste name: <input type = "text" name="paste_name" value="{{paste.paste_name}}" />   <input type=submit value=update /></p>
   	   <textarea autofocus required spellcheck="false" form="pasteform" class="paste" name="u_paste">{{paste.paste_text}}</textarea>
     {% endif %}
 	</form>
